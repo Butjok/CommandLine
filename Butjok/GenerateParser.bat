@@ -1,0 +1,1 @@
+java -jar antlr-4.9.1-complete.jar *.g4 -package Butjok -o Parser -visitor -Dlanguage=CSharp
