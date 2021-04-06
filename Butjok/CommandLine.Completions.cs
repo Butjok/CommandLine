@@ -1,50 +1,76 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Antlr4.Runtime;
+using Antlr4.Runtime.Tree.Xpath;
 using UnityEngine;
 
 namespace Butjok {
     public partial class CommandLine {
 
-        public static IToken FindToken(IList<IToken> tokens, int cursor, TokenType type) {
+        public IEnumerable<string> FindCompletions(string text,
+            IReadOnlyList<(TokenType type, int start, int stop)> tokens, int cursor, int[,] levenshteinContext) {
+            Check.That(text != null);
             Check.That(tokens != null);
             Check.That(cursor >= 0);
-
-            foreach (var token in tokens) {
-                if (token.StartIndex > cursor)
-                    break;
-                if (token.Type == (int) type && token.StartIndex <= cursor && cursor <= token.StopIndex + 1)
-                    return token;
-            }
-            return null;
-        }
-        public IEnumerable<string> FindCompletions(IList<IToken>tokens, int cursor, int[,] levenshteinContext, out IToken token) {
-            Check.That(tokens != null);
-            Check.That(cursor >= 0);
+            Check.That(cursor <= text.Length);
             Check.That(levenshteinContext != null);
 
-            token = FindToken(tokens, cursor, TokenType.Name);
-            if (token == null)
-                return Enumerable.Empty<string>();
+            var cursorIdentifierTokenIndex = -1;
+            for (var i = 0; i < tokens.Count; i++) {
+                var token = tokens[i];
+                if (token.start > cursor)
+                    break;
+                if (token.start <= cursor && cursor <= token.stop + 1 &&
+                    token.type == TokenType.UnknownCommand ||
+                    token.type == TokenType.ProcedureCommand ||
+                    token.type == TokenType.VariableCommand) {
+                    
+                    cursorIdentifierTokenIndex = i;
+                    break;
+                }
+            }
 
-            var tokenText = token.Text;
-            return _commands.Keys
-                .Where(name => Match(tokenText, name))
-                .OrderBy(name => Levenshtein(levenshteinContext, tokenText, name, MatchCase))
-                .ThenBy(name => Levenshtein(levenshteinContext, tokenText, name, IgnoreCase))
-                .ThenBy(name => name);
+            var allNames = _commands.Keys.Concat(TokenStyles.Values
+                .Where(style => style.IsKeyword)
+                .Select(style => TokenLiterals.Map[style.Type]));
+            
+            IEnumerable<string> completions;
+
+            // If identifier token index is -1, it means the cursor is not over the identifier token to complete.
+            // Complete with all possible completions then.
+
+            if (cursorIdentifierTokenIndex == -1)
+                completions = allNames.Select(completion => text.Insert(cursor, completion));
+
+            else {
+                var token = tokens[cursorIdentifierTokenIndex];
+                var tokenText = text.Substring(
+                    token.start,
+                    token.stop - token.start + 1);
+
+                completions = allNames
+                    .Where(name => Match(tokenText, name))
+                    .Select(name => text.Substring(0, token.start) +
+                                    name +
+                                    text.Substring(token.stop + 1, text.Length - token.stop - 1));
+            }
+
+            return completions
+                .OrderBy(completion => Levenshtein(_levenshtein, text, completion, MatchCase))
+                .ThenBy(completion => Levenshtein(_levenshtein, text, completion, IgnoreCase))
+                .ThenBy(completion => completion);
         }
-        public static string Replace(string text, IToken token, string replacement) {
+
+        public static string Replace(string text, (TokenType type, int start, int stop) token, string replacement) {
             Check.That(text != null);
-            Check.That(token != null);
-            Check.That(token.StartIndex >= 0);
-            Check.That(token.StopIndex < text.Length);
+            Check.That(token.start >= 0);
+            Check.That(token.start <= token.stop);
+            Check.That(token.stop < text.Length);
             Check.That(replacement != null);
 
-            return text.Substring(0, token.StartIndex) +
+            return text.Substring(0, token.start) +
                    replacement +
-                   text.Substring(token.StopIndex + 1, text.Length - token.StopIndex - 1);
+                   text.Substring(token.stop + 1, text.Length - token.stop - 1);
         }
         public static bool Match(string text, string completionText) {
             var offset = 0;

@@ -37,17 +37,17 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class CommandLineBaseListener : ICommandLineListener {
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CommandLineParser.colorScheme"/>.
+	/// Enter a parse tree produced by <see cref="CommandLineParser.styles"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterColorScheme([NotNull] CommandLineParser.ColorSchemeContext context) { }
+	public virtual void EnterStyles([NotNull] CommandLineParser.StylesContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CommandLineParser.colorScheme"/>.
+	/// Exit a parse tree produced by <see cref="CommandLineParser.styles"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitColorScheme([NotNull] CommandLineParser.ColorSchemeContext context) { }
+	public virtual void ExitStyles([NotNull] CommandLineParser.StylesContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CommandLineParser.style"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -61,17 +61,17 @@ public partial class CommandLineBaseListener : ICommandLineListener {
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitStyle([NotNull] CommandLineParser.StyleContext context) { }
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CommandLineParser.input"/>.
+	/// Enter a parse tree produced by <see cref="CommandLineParser.commands"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void EnterInput([NotNull] CommandLineParser.InputContext context) { }
+	public virtual void EnterCommands([NotNull] CommandLineParser.CommandsContext context) { }
 	/// <summary>
-	/// Exit a parse tree produced by <see cref="CommandLineParser.input"/>.
+	/// Exit a parse tree produced by <see cref="CommandLineParser.commands"/>.
 	/// <para>The default implementation does nothing.</para>
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	public virtual void ExitInput([NotNull] CommandLineParser.InputContext context) { }
+	public virtual void ExitCommands([NotNull] CommandLineParser.CommandsContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CommandLineParser.statement"/>.
 	/// <para>The default implementation does nothing.</para>
@@ -132,6 +132,18 @@ public partial class CommandLineBaseListener : ICommandLineListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	public virtual void ExitVariable([NotNull] CommandLineParser.VariableContext context) { }
+	/// <summary>
+	/// Enter a parse tree produced by <see cref="CommandLineParser.null"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void EnterNull([NotNull] CommandLineParser.NullContext context) { }
+	/// <summary>
+	/// Exit a parse tree produced by <see cref="CommandLineParser.null"/>.
+	/// <para>The default implementation does nothing.</para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	public virtual void ExitNull([NotNull] CommandLineParser.NullContext context) { }
 	/// <summary>
 	/// Enter a parse tree produced by <see cref="CommandLineParser.boolean"/>.
 	/// <para>The default implementation does nothing.</para>

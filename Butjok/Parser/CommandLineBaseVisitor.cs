@@ -36,7 +36,7 @@ using ParserRuleContext = Antlr4.Runtime.ParserRuleContext;
 [System.CLSCompliant(false)]
 public partial class CommandLineBaseVisitor<Result> : AbstractParseTreeVisitor<Result>, ICommandLineVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CommandLineParser.colorScheme"/>.
+	/// Visit a parse tree produced by <see cref="CommandLineParser.styles"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -44,7 +44,7 @@ public partial class CommandLineBaseVisitor<Result> : AbstractParseTreeVisitor<R
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitColorScheme([NotNull] CommandLineParser.ColorSchemeContext context) { return VisitChildren(context); }
+	public virtual Result VisitStyles([NotNull] CommandLineParser.StylesContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.style"/>.
 	/// <para>
@@ -56,7 +56,7 @@ public partial class CommandLineBaseVisitor<Result> : AbstractParseTreeVisitor<R
 	/// <return>The visitor result.</return>
 	public virtual Result VisitStyle([NotNull] CommandLineParser.StyleContext context) { return VisitChildren(context); }
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CommandLineParser.input"/>.
+	/// Visit a parse tree produced by <see cref="CommandLineParser.commands"/>.
 	/// <para>
 	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
 	/// on <paramref name="context"/>.
@@ -64,7 +64,7 @@ public partial class CommandLineBaseVisitor<Result> : AbstractParseTreeVisitor<R
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	public virtual Result VisitInput([NotNull] CommandLineParser.InputContext context) { return VisitChildren(context); }
+	public virtual Result VisitCommands([NotNull] CommandLineParser.CommandsContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.statement"/>.
 	/// <para>
@@ -115,6 +115,16 @@ public partial class CommandLineBaseVisitor<Result> : AbstractParseTreeVisitor<R
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	public virtual Result VisitVariable([NotNull] CommandLineParser.VariableContext context) { return VisitChildren(context); }
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="CommandLineParser.null"/>.
+	/// <para>
+	/// The default implementation returns the result of calling <see cref="AbstractParseTreeVisitor{Result}.VisitChildren(IRuleNode)"/>
+	/// on <paramref name="context"/>.
+	/// </para>
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	public virtual Result VisitNull([NotNull] CommandLineParser.NullContext context) { return VisitChildren(context); }
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.boolean"/>.
 	/// <para>

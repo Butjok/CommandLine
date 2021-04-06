@@ -33,11 +33,11 @@ using IToken = Antlr4.Runtime.IToken;
 [System.CLSCompliant(false)]
 public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CommandLineParser.colorScheme"/>.
+	/// Visit a parse tree produced by <see cref="CommandLineParser.styles"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitColorScheme([NotNull] CommandLineParser.ColorSchemeContext context);
+	Result VisitStyles([NotNull] CommandLineParser.StylesContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.style"/>.
 	/// </summary>
@@ -45,11 +45,11 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitStyle([NotNull] CommandLineParser.StyleContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CommandLineParser.input"/>.
+	/// Visit a parse tree produced by <see cref="CommandLineParser.commands"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitInput([NotNull] CommandLineParser.InputContext context);
+	Result VisitCommands([NotNull] CommandLineParser.CommandsContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.statement"/>.
 	/// </summary>
@@ -80,6 +80,12 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitVariable([NotNull] CommandLineParser.VariableContext context);
+	/// <summary>
+	/// Visit a parse tree produced by <see cref="CommandLineParser.null"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNull([NotNull] CommandLineParser.NullContext context);
 	/// <summary>
 	/// Visit a parse tree produced by <see cref="CommandLineParser.boolean"/>.
 	/// </summary>

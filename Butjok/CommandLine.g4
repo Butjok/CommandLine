@@ -1,12 +1,12 @@
 grammar CommandLine;
 
-colorScheme: style* EOF;
-style: string color boolean boolean; 
+styles: style* EOF;
+style: string color boolean boolean boolean; 
 
-input: statement* EOF;
+commands: statement* EOF;
 statement: noOperation	| command;
 noOperation: Semicolon;
-command: Name value*;
+command: Identifier value*;
 	
 value
 	: boolean
@@ -16,10 +16,12 @@ value
 	| int2
 	| color
 	| variable
+	| null
 	;
 	
-variable: Name;
-boolean: True|False; 
+variable: Identifier;
+null: Null;
+boolean: True | False; 
 integer: Integer;
 real: Real | integer;
 string:  DoubleQuotedString;
@@ -30,14 +32,11 @@ shortHexRgbaColor: ShortHexRgbaColor;
 longHexRgbColor: LongHexRgbColor;
 longHexRgbaColor: LongHexRgbaColor;
 
-// Integer value 0-255 or float value 0-1
 colorComponent: integer | real;
+rgbColor: Color LeftParenthesis? colorComponent Comma? colorComponent Comma? colorComponent RightParenthesis?;
+rgbaColor: Color LeftParenthesis? colorComponent Comma? colorComponent Comma? colorComponent Comma? colorComponent RightParenthesis?;
 
-// RGB color: Color(colorComponent, colorComponent, colorComponent)
-rgbColor: Color LeftParenthesis colorComponent Comma colorComponent Comma colorComponent RightParenthesis;
-// RGBA color: Color(colorComponent, colorComponent, colorComponent, colorComponent)
-rgbaColor: Color LeftParenthesis colorComponent Comma colorComponent Comma colorComponent Comma colorComponent RightParenthesis;
-
+Null: 'null';
 Semicolon: ';';
 LeftParenthesis: '(';
 RightParenthesis: ')';
@@ -49,14 +48,14 @@ False: 'false';
 Integer: '-'? [0-9]+;
 Real: '-'? ([0-9]* '.' [0-9]+ | [0-9]+ '.');
 DoubleQuotedString: '"' ('\\' ["\\nrt] | ~["\\\u0000-\u001F])* '"';
-Name: Word ('.' Word)*;
-ShortHexRgbColor: '#' HexadecimalDigit HexadecimalDigit HexadecimalDigit;
-ShortHexRgbaColor: '#' HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit;
-LongHexRgbColor: '#' HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit;
-LongHexRgbaColor: '#' HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit HexadecimalDigit;
+Identifier: Word ('.' Word)*;
+ShortHexRgbColor: '#' Hex Hex Hex;
+ShortHexRgbaColor: '#' Hex Hex Hex Hex;
+LongHexRgbColor: '#' Hex Hex Hex Hex Hex Hex;
+LongHexRgbaColor: '#' Hex Hex Hex Hex Hex Hex Hex Hex;
 
 fragment Word: [a-zA-Z_][a-zA-Z_0-9]*;
-fragment HexadecimalDigit: [0-9a-fA-F];
+fragment Hex: [0-9a-fA-F];
 
 SingleLineComment: '//' ~[\r\n]* -> channel(HIDDEN);
 BlockComment: '/*' .*? '*/' -> channel(HIDDEN);

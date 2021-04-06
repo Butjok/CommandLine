@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
@@ -30,6 +32,7 @@ namespace Butjok {
         [Tooltip("If command's type is UnityEvent then these are callbacks for the command.")]
         [SerializeField] private UnityEvent<Arguments> unityEvent;
 
+        public CommandLine CommandLine { get; set;  }
         public object TargetObject { get; }
         public FieldInfo Field { get; }
         public PropertyInfo Property { get; }
@@ -74,15 +77,17 @@ namespace Butjok {
             @"^ [a-zA-Z_][a-zA-Z_0-9]* $",
             RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
-        public Command(CommandType type, string name = null, MethodInfo method = null, Action<Arguments> lambda = null,
+        public Command(CommandLine commandLine, CommandType type, string name = null, MethodInfo method = null,
+            Action<Arguments> lambda = null,
             FieldInfo field = null, PropertyInfo property = null, Func<object> getter = null,
             Action<object> setter = null, object targetObject = null, string[] arguments = null,
             string help = null) {
 
+            CommandLine = commandLine;
             this.type = type;
             this.help = string.IsNullOrWhiteSpace(help) ? "" : help.Trim();
             this.arguments = arguments;
-            
+
             // Precache arguments' indexes.
             var _ = Indexes;
 
@@ -173,7 +178,7 @@ namespace Butjok {
             if (!string.IsNullOrWhiteSpace(name)) {
                 var trimmed = name.Trim();
                 Check.That(NameRegex.IsMatch(trimmed), name.ToString);
-                Check.That(!TokenLiterals.Values.Contains(trimmed), trimmed.ToString);
+                Check.That(!TokenLiterals.Map.ContainsValue(trimmed), trimmed.ToString);
                 this.name = trimmed;
             }
             else {
@@ -217,7 +222,7 @@ namespace Butjok {
             }
         }
         public void Invoke(object[] values) {
-            var arguments = new Arguments(values);
+            var arguments = new Arguments(this, values);
             switch (type) {
                 case CommandType.Method:
                     Method.Invoke(TargetObject, new object[] {arguments});
@@ -234,27 +239,68 @@ namespace Butjok {
         }
     }
 
-    public class Arguments {
-        private object[] _values;
-        public Arguments(object[] values) {
+    public class Arguments : IEnumerable<object> {
+
+        private readonly Command _command;
+        private readonly object[] _values;
+
+        public int Count => _values.Length;
+        public Arguments(Command command, object[] values) {
+            _command = command;
             _values = values;
+        }
+        public object this[int index] {
+            get {
+                Check.That(index >= 0, index.ToString);
+                Check.That(index < _values.Length, () => $"{index}, {_values.Length}");
+                return _values[index];
+            }
+        }
+        public object this[string name] {
+            get {
+                Check.That(_command.Indexes.ContainsKey(name), name.ToString);
+                return this[_command.Indexes[name]];
+            }
+        }
+        public T Get<T>(int index) {
+            try {
+                return (T) this[index];
+            }
+            catch (InvalidCastException) {
+                throw new CheckException($"{index}, {typeof(T)}, {this[index].GetType()}");
+            }
+        }
+        public T Get<T>(string name) {
+            try {
+                return (T) this[name];
+            }
+            catch (InvalidCastException) {
+                throw new CheckException($"{name}, {typeof(T)}, {this[name].GetType()}");
+            }
+        }
+        public IEnumerator<object> GetEnumerator() {
+            return ((IEnumerable<object>) _values).GetEnumerator();
+        }
+        IEnumerator IEnumerable.GetEnumerator() {
+            return _values.GetEnumerator();
         }
     }
 
     public partial class CommandLine {
 
         [SerializeField] private List<Command> commandList = new List<Command>();
-        private  Dictionary<string, Command> _commands;
+        private Dictionary<string, Command> _commands;
 
-        private void InitializeCommands() {
+        private void CacheCommands() {
             _commands = new Dictionary<string, Command>();
             foreach (var command in commandList) {
                 Check.That(!_commands.ContainsKey(command.Name), command.Name.ToString);
-                _commands.Add(command.Name,command);
+                _commands.Add(command.Name, command);
             }
         }
         public void AddCommand(Command command) {
             Check.That(!_commands.ContainsKey(command.Name), command.Name.ToString);
+            command.CommandLine = this;
             _commands.Add(command.Name, command);
             commandList.Add(command);
         }
