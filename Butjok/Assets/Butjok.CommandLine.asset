@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd887cbd00324521a8f30b1af7b5d680, type: 3}
-  m_Name: 
+  m_Name: Butjok.CommandLine
   m_EditorClassIdentifier: 
   input: {fileID: 4900000, guid: 4d5a7a2a651db4ba2bc616f3af85ccb6, type: 3}
   output: {fileID: 0}

@@ -1928,8 +1928,8 @@ MonoBehaviour:
     m_Padding:
       m_Left: 16
       m_Right: 6
-      m_Top: 5
-      m_Bottom: 5
+      m_Top: 6
+      m_Bottom: 6
     m_Overflow:
       m_Left: 0
       m_Right: 0

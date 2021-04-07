@@ -1,12 +1,12 @@
 using NUnit.Framework;
 using UnityEngine;
 using Butjok;
-using Assert = Butjok.Assert;
+using Assert = NUnit.Framework.Assert;
 
-public class NewTestScript {
-    // A Test behaves as an ordinary method
+public class Tests {
+
     [Test]
-    public void NewTestScriptSimplePasses() {
+    public void TestTextParser() {
         var source = "hello world \"string\" true #$%#$% false";
         var parser = new TextParser();
         parser.Parse(source);
@@ -29,6 +29,6 @@ public class NewTestScript {
             lambda: arguments => {
                 Debug.Log($"name: {arguments.Get<string>("name")}, age: {arguments.Get<int>("age")}");
             });
-        commands.Invoke("yolo", false, 123, true, false, new string('a', 10));
+        Assert.That(() => commands.Invoke("yolo", false, 123, true, false, new string('a', 10)), Throws.Exception);
     }
 }

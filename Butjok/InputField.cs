@@ -3,30 +3,28 @@ using UnityEngine;
 
 namespace Butjok {
 
-    [Serializable]
+    [CLSCompliant(false)]
     public class InputField {
 
-        [SerializeField] private string controlName;
+        private readonly string _controlName;
         private string _text = "";
         private string _richText = "";
         private string _underscores = "";
-        private GUIStyle _style, _overlayStyle;
-        private SyntaxHighlighting _syntaxHighlighting;
-        private TextParser _parser = new TextParser();
+        private readonly GUIStyle _style;
+        private readonly GUIStyle _overlayStyle;
+        private readonly SyntaxHighlighting _syntaxHighlighting;
+        private readonly TextParser _parser = new TextParser();
         public event Action<(string Old, string New)> Edited;
 
-        public InputField() {
-            controlName = "Butjok.CommandLine";
-        }
         public InputField(GUIStyle style, GUIStyle overlayStyle, Func<string, bool> exists,
-            Func<string, bool> isVariable, ColorTheme colorScheme) {
+            Func<string, bool> isVariable, ColorTheme colorScheme, string controlName) {
             Assert.That(style != null);
             Assert.That(overlayStyle != null);
             Assert.That(exists != null);
             Assert.That(isVariable != null);
 
             _style = style;
-            controlName = "Butjok.CommandLine";
+            _controlName = controlName;
             _overlayStyle = overlayStyle;
             _syntaxHighlighting = new SyntaxHighlighting(colorScheme, exists, isVariable);
         }
@@ -42,7 +40,7 @@ namespace Butjok {
         }
         public void Draw(Rect rectangle) {
 
-            GUI.SetNextControlName(controlName);
+            GUI.SetNextControlName(_controlName);
             var newText = GUI.TextField(rectangle, _text, _style)
                 .Replace("`", ""); // TODO: small hack to remove unwanted backquotes (incomplete)
             GUI.Label(rectangle, _richText, _overlayStyle);

@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace Butjok {
 
+    [CLSCompliant(false)]
     public class SyntaxHighlighting {
 
         private readonly ColorTheme _colorTheme;
@@ -16,7 +17,7 @@ namespace Butjok {
         private static readonly StringBuilder Sb2 = new StringBuilder();
 
         public SyntaxHighlighting(ColorTheme colorTheme, Func<string, bool> exists, Func<string, bool> isVariable) {
-            Assert.That(colorTheme.Styles != null);
+            Assert.That(colorTheme.Tokens != null);
 
             _colorTheme = colorTheme;
             _exists = exists;
@@ -36,7 +37,7 @@ namespace Butjok {
                 Assert.That(token.Stop < text.Length);
                 Assert.That(token.Start <= token.Stop);
 
-                var tokenStyle = _colorTheme.Styles.TryGetValue(token.Type, out var result)
+                var tokenStyle = _colorTheme.Tokens.TryGetValue(token.Type, out var result)
                     ? result
                     : _colorTheme.Default;
 

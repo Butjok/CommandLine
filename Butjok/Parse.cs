@@ -1,8 +1,11 @@
+using System;
 using System.Globalization;
 using System.Text;
 using UnityEngine;
 
 namespace Butjok {
+    
+    [CLSCompliant(false)]
     public static class Parse {
 
         public static bool IsHex(char c) {

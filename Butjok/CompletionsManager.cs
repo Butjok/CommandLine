@@ -1,55 +1,62 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 namespace Butjok {
 
-    [Serializable]
+    [CLSCompliant(false)]
     public class CompletionsManager {
 
-        private TextParser _parser;
-        [SerializeField] private List<string> allWords;
-        [SerializeField]private List<Completion> completions;
-        [SerializeField] private int index;
+        private readonly TextParser _parser;
+        private readonly List<string> _keywords;
+        private readonly List<Completion> _completions;
+        private readonly Func<IEnumerable<string>> _getCommandNames;
+        public int Index { get; private set; }
 
-        public CompletionsManager(IEnumerable<string> commandNames, ColorTheme colorTheme) {
-            Assert.That(commandNames != null);
+        public CompletionsManager(Func<IEnumerable<string>> getCommandNames, ColorTheme colorTheme) {
+            Assert.That(getCommandNames != null);
 
             _parser = new TextParser();
 
-            var keywords = TokenInfo.All
-                .Where(info => colorTheme.Styles.TryGetValue(info.Type, out var tokenStyle) && tokenStyle.IsKeyword)
-                .Select(info => info.LiteralName);
-            allWords = new List<string>(commandNames.Concat(keywords));
+            _keywords = TokenInfo.All
+                .Where(info => colorTheme.Tokens.TryGetValue(info.Type, out var tokenStyle) && tokenStyle.IsKeyword)
+                .Select(info => info.LiteralName)
+                .ToList();
+            _getCommandNames = getCommandNames;
 
-            completions = new List<Completion>();
-            index = -1;
+            _completions = new List<Completion>();
+            Index = -1;
         }
-        public int FindCompletions(string text, int cursor) {
+
+        public void FindCompletions(string text, int cursor) {
+            Assert.That(text != null);
+            Assert.That(cursor >= 0, cursor.ToString);
+            Assert.That(cursor <= text.Length, (text.Length, cursor).ToString);
+
             _parser.Parse(text);
-            completions.Clear();
-            foreach (var completion in Butjok.Completions.Find(text, _parser.TokenAt, cursor, allWords)) {
-                completions.Add(completion);
+            _completions.Clear();
+            foreach (var completion in Butjok.Completions.Find(text, _parser.TokenAt, cursor,
+                _getCommandNames().Concat(_keywords))) {
+
+                _completions.Add(completion);
             }
-            return completions.Count;
         }
-        public int NextCompletion(int shift = 1) {
-            
-            if (completions.Count == 0)
-                return -1;
-            
-            index = index == -1
-                ? shift > 0 ? 0 : completions.Count - 1
-                : Math.PositiveMod(index + shift, completions.Count);
-            
-            return index;
+
+        public void NextCompletion(int shift = 1) {
+
+            if (_completions.Count == 0) 
+                return;
+
+            Index = Index == -1
+                ? shift > 0 ? 0 : _completions.Count - 1
+                : Math.PositiveMod(Index + shift, _completions.Count);
         }
+
         public void Clear() {
-            completions.Clear();
-            index = -1;
+            _completions.Clear();
+            Index = -1;
         }
-        public int Index => index;
-        public IReadOnlyList<Completion> Completions => completions;
+        
+        public IReadOnlyList<Completion> Completions => _completions;
     }
 }

@@ -133,6 +133,7 @@ GameObject:
   m_Component:
   - component: {fileID: 124499880}
   - component: {fileID: 124499879}
+  - component: {fileID: 124499881}
   m_Layer: 0
   m_Name: GameObject (1)
   m_TagString: Untagged
@@ -153,13 +154,35 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   commands:
-    list: []
+    list:
+    - name: ' test'
+      type: 6
+      help: '            makes test happen'
+      arguments:
+      - a123
+      - z1234
+      debugComment: 
+      debugUnityObject: {fileID: 0}
+      unityEvent:
+        m_PersistentCalls:
+          m_Calls:
+          - m_Target: {fileID: 124499881}
+            m_TargetAssemblyTypeName: Test, NewAssembly
+            m_MethodName: Print
+            m_Mode: 0
+            m_Arguments:
+              m_ObjectArgument: {fileID: 0}
+              m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+              m_IntArgument: 0
+              m_FloatArgument: 0
+              m_StringArgument: 
+              m_BoolArgument: 0
+            m_CallState: 2
   skin: {fileID: 11400000, guid: 43b608e4c3c36402f9d9ef8b4e2dc321, type: 2}
   styleSettings: {fileID: 11400000, guid: f5e7428a9226846a7a6def1bb85f2a57, type: 2}
   _inputField:
     controlName: Butjok.CommandLine
-  _refreshCompletions: 0
-  completionsRadius: {x: 5, y: 5}
+  completionsRadius: {x: 10, y: 10}
   completionsManager:
     allWords: []
     completions: []
@@ -168,7 +191,7 @@ MonoBehaviour:
     keywordIcon: {fileID: 0}
     variableIcon: {fileID: 0}
     procedureIcon: {fileID: 0}
-    completionStyle:
+    style:
       m_Name: 
       m_Normal:
         m_Background: {fileID: 0}
@@ -235,7 +258,7 @@ MonoBehaviour:
       m_FixedHeight: 0
       m_StretchWidth: 1
       m_StretchHeight: 0
-    completionOverlayStyle:
+    overlayStyle:
       m_Name: 
       m_Normal:
         m_Background: {fileID: 0}
@@ -302,7 +325,7 @@ MonoBehaviour:
       m_FixedHeight: 0
       m_StretchWidth: 1
       m_StretchHeight: 0
-    completionInfoStyle:
+    infoStyle:
       m_Name: 
       m_Normal:
         m_Background: {fileID: 0}
@@ -369,7 +392,7 @@ MonoBehaviour:
       m_FixedHeight: 0
       m_StretchWidth: 1
       m_StretchHeight: 0
-    selectedCompletionStyle:
+    selectedStyle:
       m_Name: 
       m_Normal:
         m_Background: {fileID: 0}
@@ -436,7 +459,7 @@ MonoBehaviour:
       m_FixedHeight: 0
       m_StretchWidth: 1
       m_StretchHeight: 0
-    selectedCompletionOverlayStyle:
+    selectedOverlayStyle:
       m_Name: 
       m_Normal:
         m_Background: {fileID: 0}
@@ -503,12 +526,12 @@ MonoBehaviour:
       m_FixedHeight: 0
       m_StretchWidth: 1
       m_StretchHeight: 0
-    infoContent:
+    info:
       m_Text: 
       m_Image: {fileID: 0}
       m_Tooltip: 
     infoFormat: 
-    oldInfoData: {x: 0, y: 0}
+    previousInfoData: {x: 0, y: 0}
     pool: []
   fly: 0
 --- !u!4 &124499880
@@ -525,6 +548,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &124499881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124499878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b0f4ad6fd6a4405db6cd58a8e2af2138, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0

@@ -4,7 +4,7 @@ Default     			#f8f8f2 	false   	false       false
 SyntaxError				#ff5555     false	    false       false
 UnknownCommand	    	#f8f8f2 	false	    false       false
 ProcedureCommand      	#50fa7b 	false	    false       false
-VariableCommand		    #f1fa8c 	false   	false       false
+VariableCommand		    #ffb86c 	false   	false       false
 "Semicolon"			    #f8f8f2 	false   	false       false
 "LeftParenthesis"		#f8f8f2 	false	    false       false
 "RightParenthesis"  	#f8f8f2 	false   	false       false
@@ -15,7 +15,7 @@ VariableCommand		    #f1fa8c 	false   	false       false
 "False"		    		#50fa7b 	false   	false       true
 "Integer"				#8be9fd 	false   	false       false
 "Real"		    		#bd93f9 	false   	false       false
-"DoubleQuotedString"	#ffb86c 	false   	false       false
+"DoubleQuotedString"	#f1fa8c 	false   	false       false
 "Identifier"		    #f8f8f2 	false   	false       false
 "ShortHexRgbColor"	    #f8f8f2 	false   	false       false
 "ShortHexRgbaColor"	    #f8f8f2 	false   	false       false

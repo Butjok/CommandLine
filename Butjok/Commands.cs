@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Events;
 using Object = UnityEngine.Object;
@@ -9,6 +10,7 @@ using Object = UnityEngine.Object;
 namespace Butjok {
 
     [Serializable]
+    [CLSCompliant(false)]
     public class Commands {
 
         // Even values indicate procedure.
@@ -38,19 +40,25 @@ namespace Butjok {
         private SortedDictionary<string, Command> _cache;
 
         public IEnumerable<string> Names => _cache.Keys;
-
-        private static readonly List<string> List = new List<string>();
-
+        
         public void Initialize() {
             _cache = new SortedDictionary<string, Command>();
             foreach (var c in list) {
-                ValidateCommand(c.name, c.type, c.arguments, c.unityEvent, c.TargetObject, c.FieldInfo, c.PropertyInfo,
+                Validate(c.name, c.type, c.arguments, c.unityEvent, c.TargetObject, c.FieldInfo, c.PropertyInfo,
                     c.Getter, c.MethodInfo, c.Lambda);
+                FixFields(c);
                 Assert.That(!_cache.ContainsKey(c.name), c.name.ToString);
-            }
-            foreach (var c in list)
                 _cache.Add(c.name, c);
+            }
         }
+
+        private static readonly List<string> List = new List<string>();
+        private static readonly Regex IdentifierRegex = new Regex(
+            @"^ \s* [a-zA-Z_][a-zA-Z_0-9]* (?: \. [a-zA-Z_][a-zA-Z_0-9]* )* \s* $",
+            RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+        private static readonly Regex ArgumentRegex = new Regex(
+            @"^ \s* [a-zA-Z_][a-zA-Z_0-9]* \s* $",
+            RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
 
         public bool Exists(string name) {
             Assert.That(!string.IsNullOrWhiteSpace(name));
@@ -109,6 +117,10 @@ namespace Butjok {
                     command.FieldInfo.SetValue(command.TargetObject, value);
                     break;
                 case CommandType.Property:
+                    if (command.PropertyInfo.SetMethod == null) {
+                        Debug.LogWarning($"Command '{name}' refers to a read-only property '{command.PropertyInfo.Name}' in {command.TargetObject ?? command.PropertyInfo.DeclaringType}. Skipping.");
+                        return;
+                    }
                     command.PropertyInfo.SetValue(command.TargetObject, value);
                     break;
                 case CommandType.GetSet:
@@ -123,13 +135,17 @@ namespace Butjok {
             AssertExists(name, out var command);
             return string.IsNullOrEmpty(command.help) ? null : command.help;
         }
+        public string GetDebugComment(string name) {
+            AssertExists(name, out var command);
+            return string.IsNullOrEmpty(command.debugComment) ? null : command.debugComment;
+        }
         public IReadOnlyList<string> GetArguments(string name) {
             AssertExists(name, out var command);
-            Assert.That((int)command.type%2==0, (name, command.type).ToString);
+            Assert.That((int) command.type % 2 == 0, (name, command.type).ToString);
             return command.arguments == null || command.arguments.Length == 0 ? null : command.arguments;
         }
 
-        public void Add(string name = null, string help = null, string[] arguments = null, string debugComment = null,
+        public void Add(string name = null, string helpText = null, string[] arguments = null, string debugComment = null,
             UnityEvent<Arguments> unityEvent = null, object targetObject = null, FieldInfo fieldInfo = null,
             PropertyInfo propertyInfo = null, Func<object> getter = null, Action<object> setter = null,
             MethodInfo methodInfo = null, Action<Arguments> lambda = null) {
@@ -161,55 +177,19 @@ namespace Butjok {
 
             if (type == CommandType.Invalid && fieldInfo == null && propertyInfo == null && methodInfo == null)
                 throw new CheckException(
-                    "You are trying to add an invalid command, this usually happens when you accidentally pass " + 
-                    "null fieldInfo, propertyInfo or methodInfo. Please make sure that Type.GetField(), " + 
-                    "Type.GetProperty() or Type.GetMethod() returns non-null value.");
+                    "You are trying to add an invalid command, this usually happens when you accidentally pass " +
+                    "null fieldInfo, propertyInfo or methodInfo. Please make sure that Type.GetField(), " +
+                    "Type.GetProperty() or Type.GetMethod() return non-null value.");
 
-            ValidateCommand(name, type, arguments, unityEvent, targetObject, fieldInfo, propertyInfo, getter,
-                methodInfo, lambda);
-
-            switch (type) {
-                case CommandType.Method:
-                    if (string.IsNullOrWhiteSpace(name))
-                        name = MakeName(methodInfo);
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = $"Method '{methodInfo.Name}' in {targetObject ?? methodInfo.DeclaringType}";
-                    break;
-                case CommandType.Lambda:
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = "Lambda";
-                    break;
-                case CommandType.UnityEvent:
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = "UnityEvent";
-                    break;
-                case CommandType.Field:
-                    if (string.IsNullOrWhiteSpace(name))
-                        name = MakeName(fieldInfo);
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = $"Field '{fieldInfo.Name}' in {targetObject ?? methodInfo.DeclaringType}";
-                    break;
-                case CommandType.Property:
-                    if (string.IsNullOrWhiteSpace(name))
-                        name = MakeName(propertyInfo);
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment =
-                            $"{(propertyInfo.SetMethod == null ? "Read-only property" : "Property")} '{propertyInfo.Name}' in {targetObject ?? methodInfo.DeclaringType}";
-                    break;
-                case CommandType.GetSet:
-                    if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = "Getter/setter pair";
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
-            }
+            Validate(name, type, arguments, unityEvent, targetObject, fieldInfo, propertyInfo, getter, methodInfo,
+                lambda);
 
             var command = new Command {
                 name = name,
                 type = type,
-                help = string.IsNullOrWhiteSpace(help) ? "" : help,
+                help = helpText,
                 arguments = arguments,
-                debugComment = string.IsNullOrWhiteSpace(debugComment) ? "" : debugComment,
+                debugComment = debugComment,
                 debugUnityObject = targetObject is Object unityObject ? unityObject : null,
                 unityEvent = unityEvent,
                 TargetObject = targetObject,
@@ -220,11 +200,14 @@ namespace Butjok {
                 MethodInfo = methodInfo,
                 Lambda = lambda
             };
+            FixFields(command);
+
+            Assert.That(!_cache.ContainsKey(command.name), command.name.ToString);
             list.Add(command);
             _cache.Add(command.name, command);
         }
 
-        private static void ValidateCommand(string name, CommandType type, string[] arguments,
+        private static void Validate(string name, CommandType type, string[] arguments,
             UnityEvent<Arguments> unityEvent, object targetObject, FieldInfo fieldInfo, PropertyInfo propertyInfo,
             Func<object> getter, MethodInfo methodInfo, Action<Arguments> lambda) {
 
@@ -235,20 +218,21 @@ namespace Butjok {
 
                 case CommandType.Method:
                     Assert.That(methodInfo != null);
+                    ValidateName(name, methodInfo);
                     Assert.That(methodInfo.IsStatic == (targetObject == null));
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
                     break;
 
                 case CommandType.Lambda:
-                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    ValidateName(name, null);
                     Assert.That(lambda != null);
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
                     break;
 
                 case CommandType.UnityEvent:
-                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    ValidateName(name, null);
                     Assert.That(unityEvent != null);
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
@@ -256,11 +240,13 @@ namespace Butjok {
 
                 case CommandType.Field:
                     Assert.That(fieldInfo != null);
+                    ValidateName(name, fieldInfo);
                     Assert.That(fieldInfo.IsStatic == (targetObject == null));
                     break;
 
                 case CommandType.Property:
                     Assert.That(propertyInfo != null);
+                    ValidateName(name, propertyInfo);
                     Assert.That(propertyInfo.GetMethod != null);
                     Assert.That(propertyInfo.GetMethod.IsStatic == (targetObject == null));
                     if (propertyInfo.SetMethod != null) {
@@ -270,7 +256,7 @@ namespace Butjok {
                     break;
 
                 case CommandType.GetSet:
-                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    ValidateName(name, null);
                     Assert.That(getter != null);
                     break;
 
@@ -278,13 +264,76 @@ namespace Butjok {
                     throw new ArgumentOutOfRangeException(nameof(type), type, null);
             }
         }
+        private static void ValidateName(string name, MemberInfo memberInfo) {
+            name = name?.Trim();
+            if (memberInfo == null)
+                Assert.That(!string.IsNullOrEmpty(name));
 
+            if (string.IsNullOrEmpty(name))
+                name = MakeName(memberInfo);
+
+            Assert.That(IdentifierRegex.IsMatch(name), name.ToString);
+            Assert.That(TokenInfo.All.All(info => name != info.LiteralName), name.ToString);
+        }
         private static void ValidateArguments(string[] arguments) {
             Assert.That(arguments != null);
 
             foreach (var argument in arguments) {
-                Assert.That(!string.IsNullOrWhiteSpace(argument));
+                Assert.That(argument != null);
+                Assert.That(ArgumentRegex.IsMatch(argument), argument.ToString);
                 Assert.That(arguments.Count(name => name == argument) == 1, argument.ToString);
+            }
+        }
+
+        private static void FixFields(Command command) {
+            Assert.That(command != null);
+
+            command.name = command.name?.Trim();
+            command.debugUnityObject = command.TargetObject is Object unityObject ? unityObject : null;
+            command.help = command.help?.Trim();
+            command.debugComment = command.debugComment?.Trim();
+
+            if (string.IsNullOrWhiteSpace(command.help))
+                command.help = null;
+            if (string.IsNullOrWhiteSpace(command.debugComment))
+                command.debugComment = null;
+
+            switch (command.type) {
+                case CommandType.Method:
+                    if (string.IsNullOrEmpty(command.name))
+                        command.name = MakeName(command.MethodInfo);
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment =
+                            $"Method '{command.MethodInfo.Name}' in {command.TargetObject ?? command.MethodInfo.DeclaringType}";
+                    break;
+                case CommandType.Lambda:
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment = "Lambda";
+                    break;
+                case CommandType.UnityEvent:
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment = "UnityEvent";
+                    break;
+                case CommandType.Field:
+                    if (string.IsNullOrEmpty(command.name))
+                        command.name = MakeName(command.FieldInfo);
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment =
+                            $"Field '{command.FieldInfo.Name}' in {command.TargetObject ?? command.FieldInfo.DeclaringType}";
+                    break;
+                case CommandType.Property:
+                    if (string.IsNullOrEmpty(command.name))
+                        command.name = MakeName(command.PropertyInfo);
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment =
+                            $"{(command.PropertyInfo.SetMethod == null ? "Read-only property" : "Property")} '{command.PropertyInfo.Name}' in {command.TargetObject ?? command.PropertyInfo.DeclaringType}";
+                    break;
+                case CommandType.GetSet:
+                    if (string.IsNullOrEmpty(command.debugComment))
+                        command.debugComment = "Getter/setter pair";
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
             }
         }
 

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Butjok {
 
-    public static class FuzzySearch {
+    public static class Fuzzy {
 
         public static bool Match(string pattern, string text) {
             Assert.That(pattern != null);

@@ -7,6 +7,7 @@ using UnityEngine;
 
 namespace Butjok {
 
+    [CLSCompliant(false)]
     public class Interpreter : CommandLineBaseListener, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
 
         private readonly Func<string, bool> _isVariable;

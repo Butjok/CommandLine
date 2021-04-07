@@ -13,8 +13,9 @@ using UnityEditor;
 
 namespace Butjok {
 
-    [CreateAssetMenu(fileName = "StyleSettings")]
-    public class StyleSettings : ScriptableObject {
+    [CreateAssetMenu(fileName = nameof(ColorThemeSettings))]
+    [CLSCompliant(false)]
+    public class ColorThemeSettings : ScriptableObject {
 
         [Serializable]
         private class TokenStyle {
@@ -177,25 +178,19 @@ namespace Butjok {
         [SerializeField] private TokenStyle command;
         [SerializeField] private TokenStyle procedureCommand;
         [SerializeField] private TokenStyle variableCommand;
-        [SerializeField] private List<TokenStyle> styles;
-        [SerializeField] private Texture keywordIcon;
-        [SerializeField] private Texture procedureIcon;
-        [SerializeField] private Texture variableIcon;
+        [SerializeField] private List<TokenStyle> tokens;
 
         private static Butjok.TokenStyle ToStruct(TokenStyle style) {
             return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
         }
         public ColorTheme Provide => new ColorTheme(
-            styles.ToDictionary(style => style.type, ToStruct),
+            tokens.ToDictionary(style => style.type, ToStruct),
             ToStruct(@default),
             ToStruct(error),
             ToStruct(unknownCommand),
             ToStruct(procedureCommand),
             ToStruct(variableCommand),
-            ToStruct(command),
-            keywordIcon,
-            procedureIcon,
-            variableIcon);
+            ToStruct(command));
 
         [ContextMenu("Load From File")]
         private void LoadFromFile() {
@@ -214,7 +209,7 @@ namespace Butjok {
             }
             var path = AssetDatabase.GetAssetPath(output);
             var sb = new StringBuilder(@"");
-            foreach (var style in styles) {}
+            foreach (var style in tokens) {}
         }
 #endif
         [ContextMenu("Reset To Defaults")]
@@ -227,9 +222,9 @@ namespace Butjok {
             procedureCommand = new TokenStyle {color = Color.green};
             variableCommand = new TokenStyle {color = Color.yellow};
 
-            styles.Clear();
+            tokens.Clear();
             foreach (var info in TokenInfo.All) {
-                styles.Add(new TokenStyle {
+                tokens.Add(new TokenStyle {
                     type = info.Type,
                     name = info.Name,
                     isKeyword = info.LiteralName != null && info.LiteralName.All(char.IsLetterOrDigit)
@@ -237,18 +232,18 @@ namespace Butjok {
             }
         }
         private void Reset() {
-            styles = new List<TokenStyle>();
+            tokens = new List<TokenStyle>();
             ResetToDefaults();
-            input = Resources.Load<TextAsset>("Butjok.CommandLine.Dracula");
             if (input)
                 Load(input.text);
         }
         public void Load(string input) {
-            StyleReader.Load(input, ref styles, ref @default, ref error, ref unknownCommand, ref procedureCommand, 
+            StyleReader.Load(input, ref tokens, ref @default, ref error, ref unknownCommand, ref procedureCommand, 
                 ref variableCommand, ref command);
         }
     }
 
+    [CLSCompliant(false)]
     public readonly struct TokenStyle {
         public readonly int Type;
         public readonly Color Color;
@@ -263,32 +258,27 @@ namespace Butjok {
             IsKeyword = isKeyword;
         }
     }
+    
+    [CLSCompliant(false)]
     public readonly struct ColorTheme {
-        public readonly IReadOnlyDictionary<int, TokenStyle> Styles;
+        public readonly IReadOnlyDictionary<int, TokenStyle> Tokens;
         public readonly TokenStyle Default;
         public readonly TokenStyle Error;
         public readonly TokenStyle UnknownCommand;
         public readonly TokenStyle Command;
         public readonly TokenStyle ProcedureCommand;
         public readonly TokenStyle VariableCommand;
-        public readonly Texture KeywordIcon;
-        public readonly Texture ProcedureIcon;
-        public readonly Texture VariableIcon;
-        public ColorTheme(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error,
-            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command,
-            Texture keywordIcon, Texture procedureIcon, Texture variableIcon) {
-            Assert.That(styles != null);
+        public ColorTheme(IReadOnlyDictionary<int, TokenStyle> tokens, TokenStyle @default, TokenStyle error,
+            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+            Assert.That(tokens != null);
 
-            Styles = styles;
+            Tokens = tokens;
             Default = @default;
             Error = error;
             UnknownCommand = unknownCommand;
             ProcedureCommand = procedureCommand;
             VariableCommand = variableCommand;
             Command = command;
-            KeywordIcon = keywordIcon;
-            ProcedureIcon = procedureIcon;
-            VariableIcon = variableIcon;
         }
     }
 }
