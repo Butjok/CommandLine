@@ -8,3 +8,6 @@ TODO
     - Declaring type;
     - Member name;
 - Better error messages from arguments.
+- Saving a color theme into file.
+- Better fuzzy search: Soundex etc.
+- History.
