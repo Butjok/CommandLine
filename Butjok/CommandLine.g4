@@ -1,7 +1,11 @@
 grammar CommandLine;
 
+// Style files
+
 styles: style* EOF;
 style: (string | Identifier) color boolean boolean boolean; 
+
+// Commands grammar.
 
 commands: statement* EOF;
 statement: noOperation	| command;
@@ -36,6 +40,8 @@ colorComponent: integer | real;
 rgbColor: Color LeftParenthesis? colorComponent Comma? colorComponent Comma? colorComponent RightParenthesis?;
 rgbaColor: Color LeftParenthesis? colorComponent Comma? colorComponent Comma? colorComponent Comma? colorComponent RightParenthesis?;
 
+// Tokens.
+
 Null: 'null';
 Semicolon: ';';
 LeftParenthesis: '(';
@@ -57,6 +63,7 @@ LongHexRgbaColor: '#' Hex Hex Hex Hex Hex Hex Hex Hex;
 fragment Word: [a-zA-Z_][a-zA-Z_0-9]*;
 fragment Hex: [0-9a-fA-F];
 
+// These go into HIDDEN channel so they don't disappear and we get them after lexer does its job.
 SingleLineComment: '//' ~[\r\n]* -> channel(HIDDEN);
 BlockComment: '/*' .*? '*/' -> channel(HIDDEN);
 Whitespace: [ \r\n\t]+ -> channel(HIDDEN);

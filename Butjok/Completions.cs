@@ -28,7 +28,7 @@ namespace Butjok {
             if (prev.Type != CommandLineLexer.Whitespace && prev.Type != CommandLineLexer.Identifier)
                 return Enumerable.Empty<(string, Func<string>)>();
 
-            // Cursor might be in the middle of whitespace token: then separate the whitespace by cursor position.
+            // Cursor might be in the middle of whitespace token: we separate the whitespace by cursor position.
             if (prev.Type == CommandLineLexer.Whitespace) {
 
                 var before = text.Substring(0, cursor);
@@ -45,7 +45,7 @@ namespace Butjok {
                 var after = text.Substring(prev.Stop + 1, text.Length - prev.Stop - 1);
 
                 return commands
-                    .Where(name => Fuzzy.Match(pattern, name))
+                    .Where(name => FuzzySearch.Match(pattern, name))
                     .OrderBy(name => LevenshteinDistance.Compute(pattern, name, matchCase: true))
                     .ThenBy(name => LevenshteinDistance.Compute(pattern, name, matchCase: false))
                     .Select(name => (name, (Func<string>) (() => before + name + space + after)));

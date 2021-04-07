@@ -36,7 +36,7 @@ namespace Butjok {
 
         private void Reset() {
 
-            styleSettings = Resources.Load<StyleSettings>("Butjok.CommandLine.StyleSettings");
+            styleSettings = Resources.Load<StyleSettings>("Butjok.CommandLine");
             Assert.That(styleSettings);
 
             skin = Resources.Load<GUISkin>("Butjok.CommandLine");
