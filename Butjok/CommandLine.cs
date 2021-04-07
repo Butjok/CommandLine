@@ -1,5 +1,7 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -19,6 +21,7 @@ namespace Butjok {
         [SerializeField] private GUISkin skin;
         [SerializeField] private StyleProvider styleProvider;
         [SerializeField] private SyntaxHighlighting syntaxHighlighting;
+        private Style _style;
 
         [Header("Debug")]
         [SerializeField] private string input;
@@ -26,6 +29,12 @@ namespace Butjok {
         [SerializeField] private string underscores;
         private readonly List<(string Name, string Text, string Colored, string Underscores)> _completions =
             new List<(string, string, string, string)>();
+
+        private IEnumerable<string> AllCompletions => commands.Names
+            .Concat(TokenInfos.Infos.Where(info
+                => info.Literal != null && _style.Styles.TryGetValue(info.Type, out var tokenStyle) &&
+                   tokenStyle.IsKeyword)
+                .Select(info => info.Literal));
 
         private void Reset() {
 
@@ -45,8 +54,9 @@ namespace Butjok {
         private void Awake() {
             Assert.That(skin);
 
+            _style = styleProvider.Provide;
             syntaxHighlighting = new SyntaxHighlighting(commands.Exists, commands.IsVariable)
-                {Style = styleProvider.Style};
+                {Style = _style};
 
             for (var i = 0; i < 100; i++)
                 commands.Add(name: $"fly{i}",
@@ -88,7 +98,7 @@ namespace Butjok {
 
                             _completions.Clear();
                             foreach (var (name, getSubstituted) in Completions.Find(input, _inputParser.TokenAt,
-                                state.cursorIndex, commands.Names)) {
+                                state.cursorIndex, AllCompletions)) {
 
                                 _completionParser.Text = name;
                                 syntaxHighlighting.HighlightSyntax(name, _completionParser.Tokens,

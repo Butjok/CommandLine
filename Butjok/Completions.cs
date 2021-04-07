@@ -23,24 +23,33 @@ namespace Butjok {
             if (cursor == 0)
                 return commands.Select(name => (name, (Func<string>) (() => name + space + text)));
 
-            var (_, token) = getTokenAt(cursor - 1);
+            var (_, prev) = getTokenAt(cursor - 1);
 
-            if (token.Type != CommandLineLexer.Whitespace && token.Type != CommandLineLexer.Identifier)
+            if (prev.Type != CommandLineLexer.Whitespace && prev.Type != CommandLineLexer.Identifier)
                 return Enumerable.Empty<(string, Func<string>)>();
 
-            var before = text.Substring(0, token.Start);
-            var tokenText = text.Substring(token.Start, token.Stop - token.Start + 1);
-            var after = text.Substring(token.Stop + 1, text.Length - token.Stop - 1);
+            // Cursor might be in the middle of whitespace token: then separate the whitespace by cursor position.
+            if (prev.Type == CommandLineLexer.Whitespace) {
+                
+                var before = text.Substring(0, cursor);
+                var after = text.Substring(cursor, text.Length - cursor);
+                
+                return commands.Select(name
+                    => (name, (Func<string>) (() => before + name + space + after)));
+            }
 
-            if (token.Type == CommandLineLexer.Whitespace)
-                return commands.Select(name => (name, (Func<string>) (() => before + tokenText + name + space + after)));
-
-            if (token.Type == CommandLineLexer.Identifier)
+            if (prev.Type == CommandLineLexer.Identifier) {
+                
+                var before = text.Substring(0, prev.Start);
+                var pattern = text.Substring(prev.Start, prev.Stop - prev.Start + 1);
+                var after = text.Substring(prev.Stop + 1, text.Length - prev.Stop - 1);
+                
                 return commands
-                    .Where(name => Fuzzy.Match(tokenText, name))
-                    .OrderBy(name => LevenshteinDistance.Compute(tokenText, name, LevenshteinDistance.MatchCase))
-                    .ThenBy(name => LevenshteinDistance.Compute(tokenText, name, LevenshteinDistance.IgnoreCase))
+                    .Where(name => Fuzzy.Match(pattern, name))
+                    .OrderBy(name => LevenshteinDistance.Compute(pattern, name, matchCase: true))
+                    .ThenBy(name => LevenshteinDistance.Compute(pattern, name, matchCase: false))
                     .Select(name => (name, (Func<string>) (() => before + name + space + after)));
+            }
 
             throw new CheckException();
         }

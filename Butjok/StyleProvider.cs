@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Butjok {
 
-    public partial class StyleProvider : MonoBehaviour {
+    public class StyleProvider : MonoBehaviour {
 
         [Serializable]
         private class TokenStyle {
@@ -28,7 +28,7 @@ namespace Butjok {
 
         // This class cannot be moved to outer scope because it uses TokenStyle class.
         // This is handy because we need a reference type here instead of Butjok.TokenStyle which is struct.
-        
+
         private class StyleReader : CommandLineBaseListener, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
 
             private static Dictionary<string, int> _tokenTypes;
@@ -162,19 +162,19 @@ namespace Butjok {
         }
 
         [SerializeField] private TextAsset file;
-        [SerializeField] private TokenStyle @default = new TokenStyle();
-        [SerializeField] private TokenStyle error = new TokenStyle {color = Color.red};
-        [SerializeField] private TokenStyle unknownCommand = new TokenStyle();
-        [SerializeField] private TokenStyle command = new TokenStyle {color = Color.magenta};
-        [SerializeField] private TokenStyle procedureCommand = new TokenStyle {color = Color.green};
-        [SerializeField] private TokenStyle variableCommand = new TokenStyle {color = Color.yellow};
+        [SerializeField] private TokenStyle @default;
+        [SerializeField] private TokenStyle error;
+        [SerializeField] private TokenStyle unknownCommand;
+        [SerializeField] private TokenStyle command;
+        [SerializeField] private TokenStyle procedureCommand;
+        [SerializeField] private TokenStyle variableCommand;
         [SerializeField] private List<TokenStyle> styles;
 
         private static Butjok.TokenStyle ToStruct(TokenStyle style) {
             return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
         }
-        public Style Style => new Style(
-            styles.Select(ToStruct).ToList(),
+        public Style Provide => new Style(
+            styles.ToDictionary(style => style.type, style => ToStruct(style)),
             ToStruct(@default),
             ToStruct(error),
             ToStruct(unknownCommand),
@@ -190,7 +190,23 @@ namespace Butjok {
             }
             Load(file.text);
         }
+        [ContextMenu("Reset To Defaults")]
+        public void ResetToDefaults() {
+
+            @default = new TokenStyle();
+            error = new TokenStyle {color = Color.red};
+            unknownCommand = new TokenStyle();
+            command = new TokenStyle {color = Color.magenta};
+            procedureCommand = new TokenStyle {color = Color.green};
+            variableCommand = new TokenStyle {color = Color.yellow};
+
+            styles.Clear();
+            foreach (var info in TokenInfos.Infos) {
+                styles.Add(new TokenStyle {type = info.Type, name = info.Name});
+            }
+        }
         private void Reset() {
+            styles = new List<TokenStyle>();
             ResetToDefaults();
             file = Resources.Load<TextAsset>("Butjok.CommandLine.Dracula");
             if (file)
@@ -217,15 +233,17 @@ namespace Butjok {
         }
     }
     public readonly struct Style {
-        public readonly IReadOnlyList<TokenStyle> Styles;
+        public readonly IReadOnlyDictionary<int, TokenStyle> Styles;
         public readonly TokenStyle Default;
         public readonly TokenStyle Error;
         public readonly TokenStyle UnknownCommand;
         public readonly TokenStyle Command;
         public readonly TokenStyle ProcedureCommand;
         public readonly TokenStyle VariableCommand;
-        public Style(IReadOnlyList<TokenStyle> styles, TokenStyle @default, TokenStyle error, TokenStyle unknownCommand,
-            TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+        public Style(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error, 
+            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+            Assert.That(styles != null);
+            
             Styles = styles;
             Default = @default;
             Error = error;

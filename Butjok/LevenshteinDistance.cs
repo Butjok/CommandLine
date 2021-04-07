@@ -7,12 +7,10 @@ namespace Butjok {
 
         private const int MaxTokenLength = 1000;
         private static readonly int[,] Distance = new int[MaxTokenLength + 1, MaxTokenLength + 1];
-        
-        public static int Compute(string a, string b, Func<char, char, bool> areEqual, int[,] distance = null) {
-            Assert.That(areEqual != null);
 
-            distance ??= Distance;
-            var maxLength = (a: distance.GetLength(0) - 1, b: distance.GetLength(1) - 1);
+        public static int Compute(string a, string b, bool matchCase) {
+
+            var maxLength = (a: Distance.GetLength(0) - 1, b: Distance.GetLength(1) - 1);
             Assert.That(maxLength.a >= 0);
             Assert.That(maxLength.b >= 0);
 
@@ -28,22 +26,23 @@ namespace Butjok {
             if (b.Length == 0)
                 return a.Length;
 
-            for (var i = 0; i <= a.Length; distance[i, 0] = i++) {}
-            for (var j = 0; j <= b.Length; distance[0, j] = j++) {}
+            for (var i = 0; i <= a.Length; Distance[i, 0] = i++) {}
+            for (var j = 0; j <= b.Length; Distance[0, j] = j++) {}
 
+            var areEqual = matchCase ? (Func<char, char, bool>) MatchCase : IgnoreCase;
             for (var i = 1; i <= a.Length; i++)
             for (var j = 1; j <= b.Length; j++) {
                 var cost = areEqual(b[j - 1], a[i - 1]) ? 0 : 1;
-                distance[i, j] = Mathf.Min(
-                    Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
-                    distance[i - 1, j - 1] + cost);
+                Distance[i, j] = Mathf.Min(
+                    Mathf.Min(Distance[i - 1, j] + 1, Distance[i, j - 1] + 1),
+                    Distance[i - 1, j - 1] + cost);
             }
-            return distance[a.Length, b.Length];
+            return Distance[a.Length, b.Length];
         }
-        public static bool MatchCase(char a, char b) {
+        private static bool MatchCase(char a, char b) {
             return a == b;
         }
-        public static bool IgnoreCase(char a, char b) {
+        private static bool IgnoreCase(char a, char b) {
             return char.ToUpperInvariant(a) == char.ToUpperInvariant(b);
         }
     }

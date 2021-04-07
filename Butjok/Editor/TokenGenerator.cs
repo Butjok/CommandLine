@@ -17,7 +17,7 @@ namespace Butjok {
 
             var paths = AssetDatabase.FindAssets("")
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => path.EndsWith("/Butjok/StyleProvider.ResetToDefaults.cs"))
+                .Where(path => path.EndsWith("/Butjok/TokenInfos.cs"))
                 .ToList();
             Assert.That(paths.Count == 1, paths.Count.ToString);
 
@@ -25,9 +25,10 @@ namespace Butjok {
                 .Select((name, value) => (
                     Name: name,
                     Value: value,
-                    SymbolicName: CommandLineLexer.DefaultVocabulary.GetSymbolicName(value)))
+                    SymbolicName: CommandLineLexer.DefaultVocabulary.GetSymbolicName(value),
+                    Literal: CommandLineLexer.DefaultVocabulary.GetLiteralName(value)))
                 .Where(tuple => tuple.SymbolicName != null)
-                .ToDictionary(tuple => tuple.SymbolicName, tuple => tuple.Value);
+                .OrderBy(tuple => tuple.Name);
 
             var code =
                 $@"/*
@@ -35,24 +36,13 @@ namespace Butjok {
  */
 
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Butjok {{
-    public partial class StyleProvider {{
-
-        [ContextMenu(""Reset To Defaults"")]
-        public void ResetToDefaults() {{
-
-            @default = new TokenStyle();
-            error = new TokenStyle {{color = Color.red}};
-            unknownCommand = new TokenStyle();
-            procedureCommand = new TokenStyle {{color = Color.green}};
-            variableCommand = new TokenStyle {{color = Color.yellow}};
-
-            styles = new List<TokenStyle> {{
-{string.Join("\n", tokenTypes.OrderBy(pair => pair.Key).Select(pair => $"                new TokenStyle{{name = \"{pair.Key}\", type = {pair.Value}}},"))}
-            }};
-        }}
+    public static class TokenInfos {{
+        public static IReadOnlyList<TokenInfo> Infos = new List<TokenInfo> {{
+            new TokenInfo(""BlockComment"", 19, null),
+{string.Join("\n", tokenTypes.Select(t => $"                new TokenInfo(\"{t.Name}\", {t.Value}, {t.Literal?.Replace("'", "\"") ?? "null"}),"))}
+        }};
     }}
 }}";
             File.WriteAllText(paths[0], code);

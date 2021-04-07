@@ -8,7 +8,7 @@ namespace Butjok {
 
     public class SyntaxHighlighting {
 
-        private readonly Dictionary<int, TokenStyle> _cachedStyles = new Dictionary<int, TokenStyle>();
+        private IReadOnlyDictionary<int, TokenStyle> _cachedStyles = new Dictionary<int, TokenStyle>();
         private TokenStyle _default;
         private TokenStyle _error;
         private TokenStyle _unknownCommand;
@@ -27,12 +27,7 @@ namespace Butjok {
 
         public Style Style {
             set {
-                _cachedStyles.Clear();
-                foreach (var item in value.Styles) {
-                    Assert.That(!_cachedStyles.ContainsKey(item.Type), item.Type.ToString);
-                    _cachedStyles.Add(item.Type, item);
-                }
-
+                _cachedStyles = value.Styles;
                 _default = value.Default;
                 _error = value.Error;
                 _unknownCommand = value.UnknownCommand;
@@ -57,6 +52,7 @@ namespace Butjok {
 
                 Color? underscoreColor = null;
                 switch (token.Type) {
+                    
                     case CommandLineLexer.ShortHexRgbColor:
                     case CommandLineLexer.ShortHexRgbaColor:
                     case CommandLineLexer.LongHexRgbColor:
