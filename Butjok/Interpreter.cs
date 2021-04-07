@@ -13,17 +13,18 @@ namespace Butjok {
         private readonly Action<string, object[]> _invoke;
         private readonly Func<string, object> _getValue;
         private readonly Action<string, object> _setValue;
-        private bool _setSilently;
+        public bool SetSilently;
         private readonly ValueEvaluator _valueEvaluator;
 
         private static readonly CommandLineLexer Lexer = new CommandLineLexer(null);
         private static readonly CommandLineParser Parser = new CommandLineParser(null);
 
-        public Interpreter(Action<string, object[]> invoke, Func<string, object> getValue,
+        public Interpreter(Action<string, object[]> invoke, Func<string, object> getValue, 
             Action<string, object> setValue, Func<string, bool> isVariable) {
             Assert.That(invoke != null);
             Assert.That(getValue != null);
             Assert.That(setValue != null);
+            Assert.That(isVariable != null);
 
             _invoke = invoke;
             _getValue = getValue;
@@ -45,7 +46,7 @@ namespace Butjok {
                         break;
                     case 1:
                         _setValue(name, _valueEvaluator.Visit(valueContexts[0]));
-                        if (_setSilently)
+                        if (SetSilently)
                             break;
                         goto case 0;
                     default:
@@ -62,7 +63,7 @@ namespace Butjok {
             throw new Exception($"{line}:{charPositionInLine}: {msg}");
         }
         public void Execute(string input, bool setSilently) {
-            _setSilently = setSilently;
+            SetSilently = setSilently;
 
             Lexer.SetInputStream(new AntlrInputStream(input));
             Parser.TokenStream = new CommonTokenStream(Lexer);

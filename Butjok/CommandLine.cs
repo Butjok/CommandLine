@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -8,53 +5,41 @@ namespace Butjok {
 
     public class CommandLine : MonoBehaviour {
 
-        [Serializable]
-        private struct Completion {
-            public string text;
-            public string coloredText;
-            public string underscores;
-        }
-
-        [SerializeField] private Commands commands = new Commands();
+        [SerializeField] private Commands commands;
         [SerializeField] private GUISkin skin;
         [SerializeField] private StyleSettings styleSettings;
-        private SyntaxHighlighting syntaxHighlighting;
-        private Style _style;
-
-        [Header("Debug")]
-        [SerializeField] private string input;
-        [SerializeField] private string coloredInput;
-        [SerializeField] private string underscores;
-        private readonly List<(string Name, string Text, string Colored, string Underscores)> _completions =
-            new List<(string, string, string, string)>();
-
-        private IEnumerable<string> AllCompletions => commands.Names
-            .Concat(Tokens.Infos.Where(info
-                    => info.Literal != null && _style.Styles.TryGetValue(info.Type, out var tokenStyle) &&
-                       tokenStyle.IsKeyword)
-                .Select(info => info.Literal));
+        private ColorTheme _colorTheme;
+        [SerializeField] private InputField _inputField;
+        [SerializeField] private Vector2Int completionsRadius = new Vector2Int(5, 5);
+        [SerializeField] private CompletionsManager completionsManager;
+        [SerializeField] private CompletionsDrawer completionsDrawer;
+        private bool _refreshCompletions;
+        private int? newCursorPosition;
+        private Interpreter _interpreter;
+        private  float _inputFieldHeight;
 
         private void Reset() {
 
+            commands = new Commands();
+            
             styleSettings = Resources.Load<StyleSettings>("Butjok.CommandLine");
             Assert.That(styleSettings);
 
             skin = Resources.Load<GUISkin>("Butjok.CommandLine");
-
-            input = "";
-            coloredInput = "";
-            underscores = "";
+            _inputField = new InputField();
         }
 
         [SerializeField] private bool fly;
+        
         private int Answer { get; set; } = 42;
 
         private void Awake() {
             Assert.That(skin);
+            Assert.That(styleSettings);
+            
+            commands.Initialize();
 
-            _style = styleSettings.Provide;
-            syntaxHighlighting = new SyntaxHighlighting(commands.Exists, commands.IsVariable)
-                {Style = _style};
+            _colorTheme = styleSettings.Provide;
 
             for (var i = 0; i < 100; i++)
                 commands.Add(name: $"fly{i}",
@@ -63,127 +48,78 @@ namespace Butjok {
 
             commands.Add(propertyInfo: GetType().GetProperty("Answer", BindingFlags.Instance | BindingFlags.NonPublic),
                 targetObject: this);
+
+            _inputField = new InputField(skin.GetStyle("Input"), skin.GetStyle("ColoredInput"), commands.Exists,
+                commands.IsVariable, _colorTheme);
+
+            _inputField.Edited += arguments => {
+                _refreshCompletions = true;
+                completionsManager.Clear();
+            };
+
+            completionsManager = new CompletionsManager(commands.Names, _colorTheme);
+            completionsDrawer = new CompletionsDrawer(_colorTheme, commands.Exists, commands.IsVariable, commands.GetValue,
+                commands.GetArguments, commands.GetHelpText, skin.GetStyle("Completion"),
+                skin.GetStyle("CompletionUnderscores"), skin.GetStyle("CompletionInfo"),
+                skin.GetStyle("SelectedCompletion"), Complete, skin.GetStyle("CompletionUnderscores"));
+            
+            _inputFieldHeight = skin.GetStyle("Input").CalcHeight(GUIContent.none, Screen.width);
+
+            _interpreter = new Interpreter(commands.Invoke, commands.GetValue, commands.SetValue, commands.IsVariable);
         }
 
-        private readonly TextParser _inputParser = new TextParser();
-        private readonly TextParser _completionParser = new TextParser();
+        private void Complete(Completion completion) {
+            _inputField.Text = completion.GetSubstituted();
+            newCursorPosition = completion.Cursor;
+        }
 
         private void OnGUI() {
+
             GUI.skin = skin;
-            var height = skin.GetStyle("Input").CalcHeight(GUIContent.none, Screen.width);
-            var rect = new Rect(0, 0, Screen.width, height);
 
-            var newInput = GUI.TextField(rect, input, skin.GetStyle("Input"));
-            if (newInput != input) {
-                input = newInput;
-                _inputParser.Text = input;
-                syntaxHighlighting.HighlightSyntax(input, _inputParser.Tokens, out coloredInput, out underscores);
+            // This is ugly, but I don't know how to do it better.
+            if (Event.current.type == EventType.Repaint && newCursorPosition != null) {
+                _inputField.Cursor = (int) newCursorPosition;
+                newCursorPosition = null;
             }
 
-            GUI.Label(rect, coloredInput, skin.GetStyle("ColoredInput"));
-            GUI.Label(rect, underscores, skin.GetStyle("ColoredInput"));
+            if (Event.current.type == EventType.KeyDown) {
+                switch (Event.current.keyCode) {
 
-            switch (Event.current.type) {
+                    case KeyCode.Tab:
+                        Event.current.Use();
 
-                case EventType.KeyDown:
-
-                    switch (Event.current.keyCode) {
-                        case KeyCode.Tab: {
-                            Event.current.Use();
-
-                            var state = (TextEditor) GUIUtility.GetStateObject(typeof(TextEditor),
-                                GUIUtility.keyboardControl);
-
-                            _completions.Clear();
-                            foreach (var (name, getSubstituted) in Completions.Find(input, _inputParser.TokenAt,
-                                state.cursorIndex, AllCompletions)) {
-
-                                _completionParser.Text = name;
-                                syntaxHighlighting.HighlightSyntax(name, _completionParser.Tokens,
-                                    out var colored, out var underscores);
-                                _completions.Add((name, getSubstituted(), colored, underscores));
-                            }
-                            break;
+                        if (_refreshCompletions) {
+                            _refreshCompletions = false;
+                            completionsManager.FindCompletions(_inputField.Text, _inputField.Cursor);
                         }
-                    }
-                    break;
-            }
 
-            for (var i = 0; i < _completions.Count; i++) {
-                var size = skin.GetStyle("Completion").CalcSize(new GUIContent(_completions[i].Colored));
-                var rect2 = new Rect(rect.xMin, rect.yMax + i * size.y, size.x, size.y);
+                        completionsManager.NextCompletion(
+                            Event.current.modifiers.HasFlag(EventModifiers.Shift) ? -1 : 1);
 
-                GUI.Label(rect2, $"{_completions[i].Colored} --to-- '{_completions[i].Text}'",
-                    skin.GetStyle("Completion"));
-                GUI.Label(rect2, _completions[i].Underscores, skin.GetStyle("CompletionUnderscores"));
-            }
+                        if (completionsManager.Index != -1)
+                            Complete(completionsManager.Completions[completionsManager.Index]);
+                        break;
 
-            /*if (showCompletions) {
-
-                if (_completions.Count == 0) {
-                    _noCompletionsGuiContent.text = noCompletionsText;
-                    var size = completionsInfoStyleName.CalcSize(_noCompletionsGuiContent);
-
-                    GUI.Label(new Rect(0, inputRectangle.yMin - size.y, size.x, size.y), _noCompletionsGuiContent,
-                        noCompletionsStyle);
-                }
-                else {
-                    var completionHeight = completionStyle.CalcHeight(GUIContent.none, Screen.width);
-                    var (low, high) = MathUtils.SlidingWindow(_completions.Count, (radiusBackward, radiusForward),
-                        completionIndex);
-
-                    var maxWidth = 0f;
-                    for (var i = low; i <= high; i++) {
-                        var command = _completions[i];
-
-                        if (updateCompletionsInRealTime)
-                            UpdateCompletion(command);
-
-                        maxWidth = Mathf.Max(maxWidth,
-                            completionStyle.CalcSize(_completionsCache[command].GUIContent).x);
-                    }
-
-                    var startY = inputRectangle.yMin - (high - low + 1) * completionHeight;
-                    var yOffset = 0f;
-
-                    if (low > 0 || high < _completions.Count - 1) {
-                        var h = completionIndexStyle.CalcHeight(_completionIndexGuiContent, Screen.width);
-                        startY -= h;
-                        GUI.Label(new Rect(0, startY, maxWidth, h), _completionIndexGuiContent, completionIndexStyle);
-                        yOffset += h;
-                    }
-                    for (var i = low; i <= high; i++) {
-                        var style = i == completionIndex ? selectedCompletionStyle : completionStyle;
-                        GUI.Label(new Rect(0, startY + yOffset, maxWidth, completionHeight),
-                            _completionsCache[_completions[i]].GUIContent, style);
-                        yOffset += completionHeight;
-                    }
+                    case KeyCode.Return:
+                    case KeyCode.KeypadEnter:
+                        Event.current.Use();
+                        
+                        _interpreter.Execute(_inputField.Text, false);
+                        
+                        _inputField.Text = "";
+                        completionsManager.Clear();
+                        _refreshCompletions = true;
+                        
+                        completionsDrawer.ClearCache();
+                        break;
                 }
             }
 
-            GUI.SetNextControlName(inputFieldControlName);
-            var newText = _inputField.Draw(inputRectangle, inputStyle, coloredInputStyle)
-                .Replace("`", ""); // TODO: small hack to remove unwanted backquotes (incomplete)
+            _inputField.Draw(new Rect(0, 0, Screen.width, _inputFieldHeight));
 
-            if (_inputField.Text != newText) {
-                SetInputText(newText);
-                _history.Touch(newText);
-                showCompletions = false;
-                mustUpdateCompletions = true;
-            }*/
-
-            /*var state = (TextEditor) GUIUtility.GetStateObject(typeof(TextEditor),
-                GUIUtility.keyboardControl);
-            ;
-
-            StringBuilder.Clear();
-            foreach (var completion in CommandLine.FindCompletions(tokens, state.cursorIndex, Distance, out var token)) {
-                var replace = CommandLine.Replace(input, token, completion);
-                StringBuilder.AppendLine(replace);
-            }
-            var text = StringBuilder.ToString();
-            if (!string.IsNullOrWhiteSpace(text))
-                Debug.Log(text);*/
+            completionsDrawer.Draw(completionsManager.Completions, (completionsRadius.x, completionsRadius.y), 
+                completionsManager.Index, _inputFieldHeight);
         }
     }
 }

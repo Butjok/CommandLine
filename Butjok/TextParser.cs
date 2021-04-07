@@ -18,7 +18,6 @@ namespace Butjok {
         private struct Interval {
             public int Start, Stop;
         }
-
         private class IntervalComparer : IComparer<Interval> {
             public static readonly IntervalComparer Default = new IntervalComparer();
             public int Compare(Interval interval, Interval target) {
@@ -38,40 +37,42 @@ namespace Butjok {
         public TextParser() {
             _tokens = new SortedList<Interval, Token>(IntervalComparer.Default);
         }
-        public string Text {
-            get => _text;
-            set {
-                Assert.That(value != null);
+        
+        public void Parse(string text) {
+            Assert.That(text != null);
 
-                _text = value;
-                _tokens.Clear();
+            _text = text;
+            _tokens.Clear();
 
-                Lexer.SetInputStream(new AntlrInputStream(value));
+            Lexer.SetInputStream(new AntlrInputStream(text));
 
-                var token = Lexer.NextToken();
-                if (token.Type == TokenConstants.EOF) {
-                    if (_text.Length - 1 >= 0)
-                        AddToken(TokenConstants.InvalidType, 0, _text.Length - 1);
-                }
-                else {
-                    if (token.StartIndex - 1 >= 0)
-                        AddToken(TokenConstants.InvalidType, 0, token.StartIndex - 1);
+            var token = Lexer.NextToken();
+            if (token.Type == TokenConstants.EOF) {
+                if (_text.Length - 1 >= 0)
+                    AddToken(TokenConstants.InvalidType, 0, _text.Length - 1);
+            }
+            else {
+                if (token.StartIndex - 1 >= 0)
+                    AddToken(TokenConstants.InvalidType, 0, token.StartIndex - 1);
+                AddToken(token.Type, token.StartIndex, token.StopIndex);
+                token = Lexer.NextToken();
+                while (token.Type != TokenConstants.EOF) {
+                    if (token.StartIndex - 1 >= LastToken.Stop + 1)
+                        AddToken(TokenConstants.InvalidType, LastToken.Stop + 1, token.StartIndex - 1);
                     AddToken(token.Type, token.StartIndex, token.StopIndex);
                     token = Lexer.NextToken();
-                    while (token.Type != TokenConstants.EOF) {
-                        if (token.StartIndex - 1 >= LastToken.Stop + 1)
-                            AddToken(TokenConstants.InvalidType, LastToken.Stop + 1, token.StartIndex - 1);
-                        AddToken(token.Type, token.StartIndex, token.StopIndex);
-                        token = Lexer.NextToken();
-                    }
-                    if (_text.Length - 1 >= LastToken.Stop + 1)
-                        AddToken(TokenConstants.InvalidType, LastToken.Stop + 1, _text.Length - 1);
                 }
+                if (_text.Length - 1 >= LastToken.Stop + 1)
+                    AddToken(TokenConstants.InvalidType, LastToken.Stop + 1, _text.Length - 1);
             }
         }
+        
+        public string Text => _text;
+        
         public (bool Found, Token token) TokenAt(int textPosition) {
+            Assert.That(_text != null);
             Assert.That(textPosition >= 0, textPosition.ToString);
-            var length = Text.Length;
+            var length = _text.Length;
             Assert.That(textPosition < length, (textPosition, length).ToString);
 
             var key = new Interval {Start = textPosition, Stop = textPosition};
@@ -81,11 +82,16 @@ namespace Butjok {
         }
 
         private void AddToken(int type, int start, int stop) {
+            Assert.That(start >= 0);
+            Assert.That(stop < _text.Length);
+            Assert.That(start <= stop);
+            
             _tokens.Add(new Interval {Start = start, Stop = stop}, new Token(type, start, stop));
         }
         private Token LastToken {
             get {
                 Assert.That(_tokens.Count > 0);
+                
                 return _tokens[_tokens.Keys[_tokens.Count - 1]];
             }
         }

@@ -8,20 +8,24 @@ namespace Butjok {
 
     public class SyntaxHighlighting {
 
-        public Style Style;
+        private readonly ColorTheme _colorTheme;
         private readonly Func<string, bool> _exists;
         private readonly Func<string, bool> _isVariable;
 
         private static readonly StringBuilder Sb = new StringBuilder();
         private static readonly StringBuilder Sb2 = new StringBuilder();
 
-        public SyntaxHighlighting(Func<string, bool> exists, Func<string, bool> isVariable) {
+        public SyntaxHighlighting(ColorTheme colorTheme, Func<string, bool> exists, Func<string, bool> isVariable) {
+            Assert.That(colorTheme.Styles != null);
+
+            _colorTheme = colorTheme;
             _exists = exists;
             _isVariable = isVariable;
         }
 
-        public void HighlightSyntax(string text, IEnumerable<Token> tokens,
-            out string coloredText, out string underscores) {
+        public void Colorize(string text, IEnumerable<Token> tokens, out string richText, out string underscores) {
+            Assert.That(text != null);
+            Assert.That(tokens != null);
 
             Sb.Clear();
             Sb2.Clear();
@@ -32,7 +36,9 @@ namespace Butjok {
                 Assert.That(token.Stop < text.Length);
                 Assert.That(token.Start <= token.Stop);
 
-                var tokenStyle = Style.Styles.TryGetValue(token.Type, out var result) ? result : Style.Default;
+                var tokenStyle = _colorTheme.Styles.TryGetValue(token.Type, out var result)
+                    ? result
+                    : _colorTheme.Default;
 
                 Color? underscoreColor = null;
                 switch (token.Type) {
@@ -50,16 +56,16 @@ namespace Butjok {
                             break;
                         var name = text.Substring(token.Start, token.Stop - token.Start + 1);
                         tokenStyle = !_exists(name)
-                            ? Style.UnknownCommand
+                            ? _colorTheme.UnknownCommand
                             : _isVariable == null
-                                ? Style.Command
+                                ? _colorTheme.Command
                                 : _isVariable(name)
-                                    ? Style.VariableCommand
-                                    : Style.ProcedureCommand;
+                                    ? _colorTheme.VariableCommand
+                                    : _colorTheme.ProcedureCommand;
                         break;
 
                     case TokenConstants.InvalidType:
-                        tokenStyle = Style.Error;
+                        tokenStyle = _colorTheme.Error;
                         break;
                 }
 
@@ -86,7 +92,7 @@ namespace Butjok {
                     Sb2.Append("</color>");
                 }
             }
-            coloredText = Sb.ToString();
+            richText = Sb.ToString();
             underscores = Sb2.ToString();
         }
     }

@@ -10,15 +10,11 @@ namespace Butjok {
 
         public static int Compute(string a, string b, bool matchCase) {
 
-            var maxLength = (a: Distance.GetLength(0) - 1, b: Distance.GetLength(1) - 1);
-            Assert.That(maxLength.a >= 0);
-            Assert.That(maxLength.b >= 0);
-
             Assert.That(a != null);
             Assert.That(b != null);
 
             // If strings are longer than we can handle - just return int.MaxValue.
-            if (a.Length > maxLength.a || b.Length > maxLength.b)
+            if (a.Length > MaxTokenLength || b.Length > MaxTokenLength)
                 return int.MaxValue;
 
             if (a.Length == 0)

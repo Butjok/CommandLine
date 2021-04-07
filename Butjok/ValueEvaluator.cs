@@ -2,6 +2,7 @@ using System;
 using UnityEngine;
 
 namespace Butjok {
+    
     public class ValueEvaluator : CommandLineBaseVisitor<object> {
 
         private readonly Func<string, object> _getVariableValue;

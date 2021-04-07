@@ -13,13 +13,13 @@ namespace Butjok {
 
         // Even values indicate procedure.
         private enum CommandType {
-            Invalid = -1, Method = 0, Lambda = 2, UnityEvent = 4, Field = 1, Property = 3, GetSet = 5
+            Invalid = 0, Method = 2, Lambda = 4, UnityEvent = 6, Field = 1, Property = 3, GetSet = 5
         }
 
         [Serializable]
         private class Command {
             public string name;
-            public CommandType type = CommandType.Invalid;
+            public CommandType type;
             public string help;
             public string[] arguments;
             public string debugComment;
@@ -41,7 +41,7 @@ namespace Butjok {
 
         private static readonly List<string> List = new List<string>();
 
-        public Commands() {
+        public void Initialize() {
             _cache = new SortedDictionary<string, Command>();
             foreach (var c in list) {
                 ValidateCommand(c.name, c.type, c.arguments, c.unityEvent, c.TargetObject, c.FieldInfo, c.PropertyInfo,
@@ -119,6 +119,16 @@ namespace Butjok {
             }
         }
 
+        public string GetHelpText(string name) {
+            AssertExists(name, out var command);
+            return string.IsNullOrEmpty(command.help) ? null : command.help;
+        }
+        public IReadOnlyList<string> GetArguments(string name) {
+            AssertExists(name, out var command);
+            Assert.That((int)command.type%2==0, (name, command.type).ToString);
+            return command.arguments == null || command.arguments.Length == 0 ? null : command.arguments;
+        }
+
         public void Add(string name = null, string help = null, string[] arguments = null, string debugComment = null,
             UnityEvent<Arguments> unityEvent = null, object targetObject = null, FieldInfo fieldInfo = null,
             PropertyInfo propertyInfo = null, Func<object> getter = null, Action<object> setter = null,
@@ -151,7 +161,9 @@ namespace Butjok {
 
             if (type == CommandType.Invalid && fieldInfo == null && propertyInfo == null && methodInfo == null)
                 throw new CheckException(
-                    "You are trying to add an invalid command, this usually happens when you pass null FieldInfo, PropertyInfo or MethodInfo.");
+                    "You are trying to add an invalid command, this usually happens when you accidentally pass " + 
+                    "null fieldInfo, propertyInfo or methodInfo. Please make sure that Type.GetField(), " + 
+                    "Type.GetProperty() or Type.GetMethod() returns non-null value.");
 
             ValidateCommand(name, type, arguments, unityEvent, targetObject, fieldInfo, propertyInfo, getter,
                 methodInfo, lambda);
@@ -165,11 +177,11 @@ namespace Butjok {
                     break;
                 case CommandType.Lambda:
                     if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = $"Lambda";
+                        debugComment = "Lambda";
                     break;
                 case CommandType.UnityEvent:
                     if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = $"UnityEvent";
+                        debugComment = "UnityEvent";
                     break;
                 case CommandType.Field:
                     if (string.IsNullOrWhiteSpace(name))
@@ -186,7 +198,7 @@ namespace Butjok {
                     break;
                 case CommandType.GetSet:
                     if (string.IsNullOrWhiteSpace(debugComment))
-                        debugComment = $"Getter/setter pair";
+                        debugComment = "Getter/setter pair";
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();

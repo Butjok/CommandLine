@@ -81,7 +81,6 @@ namespace Butjok {
             return float.Parse(text, CultureInfo.InvariantCulture);
         }
         public static string String(string text) {
-
             Assert.That(!string.IsNullOrWhiteSpace(text));
             Assert.That(text.Length >= 2);
             Assert.That(text[0] == '"');

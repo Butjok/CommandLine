@@ -2,9 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Butjok {
 
@@ -15,6 +20,7 @@ namespace Butjok {
         private class TokenStyle {
             // This is used only as a header for list element in Inspector.
             [HideInInspector] public string name = nameof(TokenConstants.InvalidType);
+            
             [HideInInspector] public int type = TokenConstants.InvalidType;
             public Color color = Color.white;
             public bool bold;
@@ -37,10 +43,8 @@ namespace Butjok {
             private static TokenStyle _default = new TokenStyle();
             private static TokenStyle _error = new TokenStyle {color = Color.red};
             private static TokenStyle _unknownCommand = new TokenStyle();
-            private static TokenStyle _procedureCommand = new TokenStyle
-                {color = Color.green};
-            private static TokenStyle _variableCommand = new TokenStyle
-                {color = Color.yellow};
+            private static TokenStyle _procedureCommand = new TokenStyle {color = Color.green};
+            private static TokenStyle _variableCommand = new TokenStyle {color = Color.yellow};
             private static TokenStyle _command = new TokenStyle {color = Color.cyan};
 
             private static readonly CommandLineLexer Lexer;
@@ -62,7 +66,7 @@ namespace Butjok {
             public static void Load(string input, ref List<TokenStyle> styles,
                 ref TokenStyle @default, ref TokenStyle error,
                 ref TokenStyle unknownCommand, ref TokenStyle procedureCommand,
-                ref TokenStyle variableCommand) {
+                ref TokenStyle variableCommand, ref TokenStyle command) {
 
                 // Read token types from Lexer class into a dictionary: tokenTypeName => intValue.
                 // Cannot place this code in static Styles() constructor because if Unity has domain reload disabled
@@ -98,6 +102,7 @@ namespace Butjok {
                 Swap.Values(ref unknownCommand, ref _unknownCommand);
                 Swap.Values(ref procedureCommand, ref _procedureCommand);
                 Swap.Values(ref variableCommand, ref _variableCommand);
+                Swap.Values(ref command, ref _command);
             }
 
             public void SyntaxError(TextWriter output, IRecognizer recognizer, int offendingSymbol, int line,
@@ -162,7 +167,10 @@ namespace Butjok {
             }
         }
 
-        [SerializeField] private TextAsset file;
+        [SerializeField] private TextAsset input;
+        [SerializeField] private TextAsset output;
+
+        [Space]
         [SerializeField] private TokenStyle @default;
         [SerializeField] private TokenStyle error;
         [SerializeField] private TokenStyle unknownCommand;
@@ -170,27 +178,45 @@ namespace Butjok {
         [SerializeField] private TokenStyle procedureCommand;
         [SerializeField] private TokenStyle variableCommand;
         [SerializeField] private List<TokenStyle> styles;
+        [SerializeField] private Texture keywordIcon;
+        [SerializeField] private Texture procedureIcon;
+        [SerializeField] private Texture variableIcon;
 
         private static Butjok.TokenStyle ToStruct(TokenStyle style) {
             return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
         }
-        public Style Provide => new Style(
+        public ColorTheme Provide => new ColorTheme(
             styles.ToDictionary(style => style.type, ToStruct),
             ToStruct(@default),
             ToStruct(error),
             ToStruct(unknownCommand),
             ToStruct(procedureCommand),
             ToStruct(variableCommand),
-            ToStruct(command));
+            ToStruct(command),
+            keywordIcon,
+            procedureIcon,
+            variableIcon);
 
         [ContextMenu("Load From File")]
         private void LoadFromFile() {
-            if (!file) {
-                Debug.Log("Please assign source style file into 'File' field of Style Provider.", this);
+            if (!input) {
+                Debug.Log("Please assign source style file into 'Input' field.", this);
                 return;
             }
-            Load(file.text);
+            Load(input.text);
         }
+#if UNITY_EDITOR
+        [ContextMenu("Save Into File")]
+        private void SaveIntoFile() {
+            if (!output) {
+                Debug.Log("Please assign target style file into 'Output' field.", this);
+                return;
+            }
+            var path = AssetDatabase.GetAssetPath(output);
+            var sb = new StringBuilder(@"");
+            foreach (var style in styles) {}
+        }
+#endif
         [ContextMenu("Reset To Defaults")]
         public void ResetToDefaults() {
 
@@ -202,20 +228,24 @@ namespace Butjok {
             variableCommand = new TokenStyle {color = Color.yellow};
 
             styles.Clear();
-            foreach (var info in Tokens.Infos) {
-                styles.Add(new TokenStyle {type = info.Type, name = info.Name});
+            foreach (var info in TokenInfo.All) {
+                styles.Add(new TokenStyle {
+                    type = info.Type,
+                    name = info.Name,
+                    isKeyword = info.LiteralName != null && info.LiteralName.All(char.IsLetterOrDigit)
+                });
             }
         }
         private void Reset() {
             styles = new List<TokenStyle>();
             ResetToDefaults();
-            file = Resources.Load<TextAsset>("Butjok.CommandLine.Dracula");
-            if (file)
-                Load(file.text);
+            input = Resources.Load<TextAsset>("Butjok.CommandLine.Dracula");
+            if (input)
+                Load(input.text);
         }
         public void Load(string input) {
-            StyleReader.Load(input,
-                ref styles, ref @default, ref error, ref unknownCommand, ref procedureCommand, ref variableCommand);
+            StyleReader.Load(input, ref styles, ref @default, ref error, ref unknownCommand, ref procedureCommand, 
+                ref variableCommand, ref command);
         }
     }
 
@@ -233,7 +263,7 @@ namespace Butjok {
             IsKeyword = isKeyword;
         }
     }
-    public readonly struct Style {
+    public readonly struct ColorTheme {
         public readonly IReadOnlyDictionary<int, TokenStyle> Styles;
         public readonly TokenStyle Default;
         public readonly TokenStyle Error;
@@ -241,8 +271,12 @@ namespace Butjok {
         public readonly TokenStyle Command;
         public readonly TokenStyle ProcedureCommand;
         public readonly TokenStyle VariableCommand;
-        public Style(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error,
-            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+        public readonly Texture KeywordIcon;
+        public readonly Texture ProcedureIcon;
+        public readonly Texture VariableIcon;
+        public ColorTheme(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error,
+            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command,
+            Texture keywordIcon, Texture procedureIcon, Texture variableIcon) {
             Assert.That(styles != null);
 
             Styles = styles;
@@ -252,6 +286,9 @@ namespace Butjok {
             ProcedureCommand = procedureCommand;
             VariableCommand = variableCommand;
             Command = command;
+            KeywordIcon = keywordIcon;
+            ProcedureIcon = procedureIcon;
+            VariableIcon = variableIcon;
         }
     }
 }

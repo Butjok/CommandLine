@@ -4,11 +4,14 @@ namespace Butjok {
 
     public static class FuzzySearch {
 
-        public static bool Match(string text, string completionText) {
+        public static bool Match(string pattern, string text) {
+            Assert.That(pattern != null);
+            Assert.That(text != null);
+            
             var offset = 0;
-            foreach (var character in text) {
-                var offset0 = completionText.IndexOf(char.ToLowerInvariant(character), offset);
-                var offset1 = completionText.IndexOf(char.ToUpperInvariant(character), offset);
+            foreach (var character in pattern) {
+                var offset0 = text.IndexOf(char.ToLowerInvariant(character), offset);
+                var offset1 = text.IndexOf(char.ToUpperInvariant(character), offset);
                 if (offset0 == -1 && offset1 == -1)
                     return false;
                 if (offset1 == -1)
