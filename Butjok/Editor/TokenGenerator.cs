@@ -3,16 +3,19 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace Butjok {
+namespace Butjok.Editor {
 
     public static class TokenGenerator {
 
-        [MenuItem("Window/Command Line/Generate tokens")]
+        private const string MenuItemPath = "Window/Command Line/Generate Tokens";
+        private const string FileSuffix = "/Butjok/Tokens.cs";
+        
+        [MenuItem(MenuItemPath)]
         private static void Regenerate() {
 
             var paths = AssetDatabase.FindAssets("")
                 .Select(AssetDatabase.GUIDToAssetPath)
-                .Where(path => path.EndsWith("/Butjok/TokenInfos.cs"))
+                .Where(path => path.EndsWith(FileSuffix))
                 .ToList();
             Assert.That(paths.Count == 1, paths.Count.ToString);
 
@@ -27,7 +30,7 @@ namespace Butjok {
 
             var code =
                 $@"/*
- * Generated automatically from Antlr lexer class. See Window > Command Line > Generate tokens.
+ * Generated automatically from Antlr lexer class. See {MenuItemPath.Replace("/", " > ")}.
  */
 
 using System.Collections.Generic;
@@ -45,7 +48,7 @@ namespace Butjok {{
         }}
     }}
 
-    public static class TokenInfos {{
+    public static class Tokens {{
         public static IReadOnlyList<TokenInfo> Infos = new List<TokenInfo> {{
             new TokenInfo(""BlockComment"", 19, null),
 {string.Join("\n", tokenTypes.Select(t => $"                new TokenInfo(\"{t.Name}\", {t.Value}, {t.Literal?.Replace("'", "\"") ?? "null"}),"))}

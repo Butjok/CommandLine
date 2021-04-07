@@ -202,7 +202,7 @@ namespace Butjok {
             variableCommand = new TokenStyle {color = Color.yellow};
 
             styles.Clear();
-            foreach (var info in TokenInfos.Infos) {
+            foreach (var info in Tokens.Infos) {
                 styles.Add(new TokenStyle {type = info.Type, name = info.Name});
             }
         }

@@ -18,7 +18,7 @@ namespace Butjok {
         [SerializeField] private Commands commands = new Commands();
         [SerializeField] private GUISkin skin;
         [SerializeField] private StyleSettings styleSettings;
-        [SerializeField] private SyntaxHighlighting syntaxHighlighting;
+        private SyntaxHighlighting syntaxHighlighting;
         private Style _style;
 
         [Header("Debug")]
@@ -29,7 +29,7 @@ namespace Butjok {
             new List<(string, string, string, string)>();
 
         private IEnumerable<string> AllCompletions => commands.Names
-            .Concat(TokenInfos.Infos.Where(info
+            .Concat(Tokens.Infos.Where(info
                     => info.Literal != null && _style.Styles.TryGetValue(info.Type, out var tokenStyle) &&
                        tokenStyle.IsKeyword)
                 .Select(info => info.Literal));
