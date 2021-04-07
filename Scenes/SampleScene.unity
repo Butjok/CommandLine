@@ -123,6 +123,223 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &124499878
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 124499880}
+  - component: {fileID: 124499882}
+  - component: {fileID: 124499881}
+  - component: {fileID: 124499879}
+  m_Layer: 0
+  m_Name: GameObject (1)
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &124499879
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124499878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3959230063264d6389708ade7e2b3fef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  commands: {fileID: 124499882}
+  skin: {fileID: 11400000, guid: 43b608e4c3c36402f9d9ef8b4e2dc321, type: 2}
+  styleProvider: {fileID: 124499881}
+  input: 
+  coloredInput: 
+  underscores: 
+  fly: 0
+  _completions: []
+--- !u!4 &124499880
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124499878}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 2
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &124499881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124499878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd887cbd00324521a8f30b1af7b5d680, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  file: {fileID: 4900000, guid: 4d5a7a2a651db4ba2bc616f3af85ccb6, type: 3}
+  default:
+    name: InvalidType
+    type: 0
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  error:
+    name: InvalidType
+    type: 0
+    color: {r: 1, g: 0.33333334, b: 0.33333334, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  unknownCommand:
+    name: InvalidType
+    type: 0
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  procedureCommand:
+    name: InvalidType
+    type: 0
+    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  variableCommand:
+    name: InvalidType
+    type: 0
+    color: {r: 0.94509804, g: 0.98039216, b: 0.54901963, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  styles:
+  - name: Color
+    type: 7
+    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 1
+  - name: Comma
+    type: 5
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: DoubleQuotedString
+    type: 12
+    color: {r: 1, g: 0.72156864, b: 0.42352942, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: False
+    type: 9
+    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 1
+  - name: Identifier
+    type: 13
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: Integer
+    type: 10
+    color: {r: 0.54509807, g: 0.9137255, b: 0.99215686, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: LeftParenthesis
+    type: 3
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: LongHexRgbColor
+    type: 16
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: LongHexRgbaColor
+    type: 17
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: Real
+    type: 11
+    color: {r: 0.7411765, g: 0.5764706, b: 0.9764706, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: RightParenthesis
+    type: 4
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: Semicolon
+    type: 2
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: ShortHexRgbColor
+    type: 14
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: ShortHexRgbaColor
+    type: 15
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+  - name: True
+    type: 8
+    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 1
+  - name: Vector2Int
+    type: 6
+    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 1
+  - name: Whitespace
+    type: 20
+    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
+    bold: 0
+    italic: 0
+    isKeyword: 0
+--- !u!114 &124499882
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 124499878}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d16b0827d5034da786b8af7ab4be6b86, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  list: []
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -298,175 +515,4 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1911059748
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1911059750}
-  - component: {fileID: 1911059749}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1911059749
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1911059748}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3959230063264d6389708ade7e2b3fef, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  commandList: []
-  colorSchemeFile: {fileID: 4900000, guid: 4d5a7a2a651db4ba2bc616f3af85ccb6, type: 3}
-  tokenStylesList:
-  - description: BlockComment
-    type: 19
-    color: {r: 1, g: 1, b: 1, a: 1}
-    bold: 0
-    italic: 0
-  - description: Color
-    type: 7
-    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
-    bold: 0
-    italic: 0
-  - description: Comma
-    type: 5
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: DoubleQuotedString
-    type: 12
-    color: {r: 1, g: 0.72156864, b: 0.42352942, a: 1}
-    bold: 0
-    italic: 0
-  - description: False
-    type: 9
-    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
-    bold: 0
-    italic: 0
-  - description: Identifier
-    type: 13
-    color: {r: 1, g: 1, b: 1, a: 1}
-    bold: 0
-    italic: 0
-  - description: Integer
-    type: 10
-    color: {r: 0.54509807, g: 0.9137255, b: 0.99215686, a: 1}
-    bold: 0
-    italic: 0
-  - description: LeftParenthesis
-    type: 3
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: LongHexRgbaColor
-    type: 17
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: LongHexRgbColor
-    type: 16
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: Null
-    type: 1
-    color: {r: 1, g: 1, b: 1, a: 1}
-    bold: 0
-    italic: 0
-  - description: ProcedureCommand
-    type: -3
-    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
-    bold: 0
-    italic: 0
-  - description: Real
-    type: 11
-    color: {r: 0.7411765, g: 0.5764706, b: 0.9764706, a: 1}
-    bold: 0
-    italic: 0
-  - description: RightParenthesis
-    type: 4
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: Semicolon
-    type: 2
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: ShortHexRgbaColor
-    type: 15
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: ShortHexRgbColor
-    type: 14
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: SingleLineComment
-    type: 18
-    color: {r: 1, g: 1, b: 1, a: 1}
-    bold: 0
-    italic: 0
-  - description: True
-    type: 8
-    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
-    bold: 0
-    italic: 0
-  - description: Unknown
-    type: -1
-    color: {r: 1, g: 0.33333334, b: 0.33333334, a: 1}
-    bold: 0
-    italic: 0
-  - description: UnknownCommand
-    type: -2
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  - description: VariableCommand
-    type: -4
-    color: {r: 0.94509804, g: 0.98039216, b: 0.54901963, a: 1}
-    bold: 0
-    italic: 0
-  - description: Vector2Int
-    type: 6
-    color: {r: 0.3137255, g: 0.98039216, b: 0.48235294, a: 1}
-    bold: 0
-    italic: 0
-  - description: Whitespace
-    type: 20
-    color: {r: 0.972549, g: 0.972549, b: 0.9490196, a: 1}
-    bold: 0
-    italic: 0
-  fly: 0
-  skin: {fileID: 11400000, guid: 43b608e4c3c36402f9d9ef8b4e2dc321, type: 2}
-  input: 
-  coloredInput: 
-  underscores: 
---- !u!4 &1911059750
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1911059748}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}

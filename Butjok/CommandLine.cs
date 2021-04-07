@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using Antlr4.Runtime;
 using UnityEngine;
 
 namespace Butjok {
-    [Serializable]
-    public partial class CommandLine : MonoBehaviour, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
+    
+    [RequireComponent(typeof(Commands))]
+    [RequireComponent(typeof(StyleProvider))]
+    public partial class CommandLine : MonoBehaviour {
 
         [Serializable]
         private struct Completion {
@@ -17,45 +17,58 @@ namespace Butjok {
             public string underscores;
         }
 
-        [SerializeField] private bool fly;
-
+        [SerializeField] private Commands commands;
         [SerializeField] private GUISkin skin;
-        [SerializeField] private string input = "";
-        [SerializeField] private string coloredInput = "";
-        [SerializeField] private string underscores = "";
+        [SerializeField] private StyleProvider styleProvider;
+        [SerializeField] private SyntaxHighlighting syntaxHighlighting;
 
+        [Header("Debug")]
+        [SerializeField] private string input;
+        [SerializeField] private string coloredInput;
+        [SerializeField] private string underscores;
+        private readonly List<(string Name, string Text, string Colored, string Underscores)> _completions =
+            new List<(string,string,string,string)>();
+
+        private void Reset() {
+
+            styleProvider = GetComponent<StyleProvider>();
+            Check.That(styleProvider);
+
+            commands = GetComponent<Commands>();
+            Check.That(commands);
+
+            skin = Resources.Load<GUISkin>("Butjok.CommandLine");
+
+            input = "";
+            coloredInput = "";
+            underscores = "";
+        }
+
+        [SerializeField] private bool fly;
+        private int Answer { get; set; } = 42;
+        
         private void Awake() {
             Check.That(skin);
+            
+            commands.Initialize();
 
-            CacheTokenStyles();
-            CacheCommands();
+            syntaxHighlighting = new SyntaxHighlighting(commandName => {
+                var (found, command) = commands.Get(commandName);
+                return found ? (true, command.VariableGet != null) : (false, false);
+            }) 
+                {Style = styleProvider.Style};
 
             for (var i = 0; i < 100; i++)
-                AddCommand(new Command(this, CommandType.Field,
-                    name: $"fly{i}",
-                    field: GetType().GetField("fly", BindingFlags.Instance | BindingFlags.NonPublic),
-                    targetObject: this));
+                commands.Add(name: $"fly{i}",
+                    fieldInfo: GetType().GetField("fly", BindingFlags.Instance | BindingFlags.NonPublic),
+                    targetObject: this);
 
-            AddCommand(new Command(this, CommandType.Method,
-                method: GetType().GetMethod("Print", BindingFlags.Instance | BindingFlags.NonPublic),
-                targetObject: this));
+            commands.Add(propertyInfo: GetType().GetProperty("Answer", BindingFlags.Instance | BindingFlags.NonPublic),
+                targetObject: this);
         }
 
-        private void Print(Arguments arguments) {
-            foreach (var argument in arguments)
-                Debug.Log(argument);
-        }
-
-        [SerializeField] private List<Completion> _completions = new List<Completion>();
-        private readonly CommandLineLexer _lexer = new CommandLineLexer(null);
-        private readonly List<(TokenType type, int start, int stop)> _tokens
-            = new List<(TokenType type, int start, int stop)>();
-        private readonly StringBuilder _sb = new StringBuilder();
-        private readonly StringBuilder _sb2 = new StringBuilder();
-        private readonly int[,] _levenshtein = new int[1000, 1000];
-
-        private readonly List<(TokenType type, int start, int stop)> _tokens2
-            = new List<(TokenType type, int start, int stop)>();
+        private readonly TextParser _inputParser = new TextParser();
+        private readonly TextParser _completionParser = new TextParser();
 
         private void OnGUI() {
             GUI.skin = skin;
@@ -65,14 +78,13 @@ namespace Butjok {
             var newInput = GUI.TextField(rect, input, skin.GetStyle("Input"));
             if (newInput != input) {
                 input = newInput;
-                _lexer.SetInputStream(new AntlrInputStream(input));
-                ReadAllTokens(input, _lexer, _tokens);
-                HighlightSyntax(input, _tokens, _sb, _sb2, out coloredInput, out underscores);
+                _inputParser.Text = input;
+                syntaxHighlighting.HighlightSyntax(input, _inputParser.Tokens ,out coloredInput, out underscores);
             }
 
             GUI.Label(rect, coloredInput, skin.GetStyle("ColoredInput"));
             GUI.Label(rect, underscores, skin.GetStyle("ColoredInput"));
-
+            
             switch (Event.current.type) {
 
                 case EventType.KeyDown:
@@ -85,14 +97,14 @@ namespace Butjok {
                                 GUIUtility.keyboardControl);
 
                             _completions.Clear();
-                            _completions.AddRange(FindCompletions(input, _tokens, state.cursorIndex, _levenshtein)
-                                .Select(text => {
-                                    var completion = new Completion {text=text};
-                                    ReadAllTokens(text, _lexer, _tokens2);
-                                    HighlightSyntax(text, _tokens2, _sb, _sb2, 
-                                        out completion.coloredText, out completion.underscores);
-                                    return completion;
-                                }));
+                            foreach (var (name, getSubstituted) in Completions.Find(input, _inputParser.TokenAt,
+                                state.cursorIndex, commands.Names)) {
+
+                                _completionParser.Text = name;
+                                syntaxHighlighting.HighlightSyntax(name, _completionParser.Tokens, 
+                                    out var colored, out var underscores);
+                                _completions.Add((name, getSubstituted(), colored, underscores));
+                            }
                             break;
                         }
                     }
@@ -100,11 +112,11 @@ namespace Butjok {
             }
 
             for (var i = 0; i < _completions.Count; i++) {
-                var size = skin.GetStyle("Completion").CalcSize(new GUIContent(_completions[i].coloredText));
+                var size = skin.GetStyle("Completion").CalcSize(new GUIContent(_completions[i].Colored));
                 var rect2 = new Rect(rect.xMin, rect.yMax + i * size.y, size.x, size.y);
 
-                GUI.Label(rect2, _completions[i].coloredText, skin.GetStyle("Completion"));
-                GUI.Label(rect2, _completions[i].underscores, skin.GetStyle("CompletionUnderscores"));
+                GUI.Label(rect2, $"{_completions[i].Colored} --to-- '{_completions[i].Text}'" , skin.GetStyle("Completion"));
+                GUI.Label(rect2, _completions[i].Underscores, skin.GetStyle("CompletionUnderscores"));
             }
 
             /*if (showCompletions) {

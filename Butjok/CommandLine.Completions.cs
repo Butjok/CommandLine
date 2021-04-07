@@ -1,129 +1,48 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Antlr4.Runtime.Tree.Xpath;
-using UnityEngine;
 
 namespace Butjok {
-    public partial class CommandLine {
 
-        public IEnumerable<string> FindCompletions(string text,
-            IReadOnlyList<(TokenType type, int start, int stop)> tokens, int cursor, int[,] levenshteinContext) {
+    public static class Completions {
+
+        public static IEnumerable<(string Name, Func<string> GetSubstituted)>
+            Find(string text, Func<int, (bool Found, Token Token)> getTokenAt, int cursor,
+                IEnumerable<string> commands) {
             Check.That(text != null);
-            Check.That(tokens != null);
+            Check.That(getTokenAt != null);
             Check.That(cursor >= 0);
-            Check.That(cursor <= text.Length);
-            Check.That(levenshteinContext != null);
+            Check.That(cursor <= text.Length); // Cursor can be at the end of the string.
 
-            var cursorIdentifierTokenIndex = -1;
-            for (var i = 0; i < tokens.Count; i++) {
-                var token = tokens[i];
-                if (token.start > cursor)
-                    break;
-                if (token.start <= cursor && cursor <= token.stop + 1 &&
-                    token.type == TokenType.UnknownCommand ||
-                    token.type == TokenType.ProcedureCommand ||
-                    token.type == TokenType.VariableCommand) {
-                    
-                    cursorIdentifierTokenIndex = i;
-                    break;
-                }
-            }
+            if (string.IsNullOrWhiteSpace(text))
+                return commands.Select(name => (name, (Func<string>) (() => name + ' ')));
 
-            var allNames = _commands.Keys.Concat(TokenStyles.Values
-                .Where(style => style.IsKeyword)
-                .Select(style => TokenLiterals.Map[style.Type]));
+            var (_, next) = cursor == text.Length ? (false, Token.Invalid) : getTokenAt(cursor);
+            var space = next.Type == CommandLineLexer.Whitespace ? "" : " ";
             
-            IEnumerable<string> completions;
+            if (cursor == 0)
+                return commands.Select(name => (name, (Func<string>) (() => name + space + text)));
 
-            // If identifier token index is -1, it means the cursor is not over the identifier token to complete.
-            // Complete with all possible completions then.
+            var (_, token) = getTokenAt(cursor - 1);
 
-            if (cursorIdentifierTokenIndex == -1)
-                completions = allNames.Select(completion => text.Insert(cursor, completion));
+            if (token.Type != CommandLineLexer.Whitespace && token.Type != CommandLineLexer.Identifier)
+                return Enumerable.Empty<(string, Func<string>)>();
 
-            else {
-                var token = tokens[cursorIdentifierTokenIndex];
-                var tokenText = text.Substring(
-                    token.start,
-                    token.stop - token.start + 1);
+            var before = text.Substring(0, token.Start);
+            var tokenText = text.Substring(token.Start, token.Stop - token.Start + 1);
+            var after = text.Substring(token.Stop + 1, text.Length - token.Stop - 1);
 
-                completions = allNames
-                    .Where(name => Match(tokenText, name))
-                    .Select(name => text.Substring(0, token.start) +
-                                    name +
-                                    text.Substring(token.stop + 1, text.Length - token.stop - 1));
-            }
+            if (token.Type == CommandLineLexer.Whitespace)
+                return commands.Select(name => (name, (Func<string>) (() => before + tokenText + name + space + after)));
 
-            return completions
-                .OrderBy(completion => Levenshtein(_levenshtein, text, completion, MatchCase))
-                .ThenBy(completion => Levenshtein(_levenshtein, text, completion, IgnoreCase))
-                .ThenBy(completion => completion);
-        }
+            if (token.Type == CommandLineLexer.Identifier)
+                return commands
+                    .Where(name => Fuzzy.Match(tokenText, name))
+                    .OrderBy(name => LevenshteinDistance.Compute(tokenText, name, LevenshteinDistance.MatchCase))
+                    .ThenBy(name => LevenshteinDistance.Compute(tokenText, name, LevenshteinDistance.IgnoreCase))
+                    .Select(name => (name, (Func<string>) (() => before + name + space + after)));
 
-        public static string Replace(string text, (TokenType type, int start, int stop) token, string replacement) {
-            Check.That(text != null);
-            Check.That(token.start >= 0);
-            Check.That(token.start <= token.stop);
-            Check.That(token.stop < text.Length);
-            Check.That(replacement != null);
-
-            return text.Substring(0, token.start) +
-                   replacement +
-                   text.Substring(token.stop + 1, text.Length - token.stop - 1);
-        }
-        public static bool Match(string text, string completionText) {
-            var offset = 0;
-            foreach (var character in text) {
-                var offset0 = completionText.IndexOf(char.ToLowerInvariant(character), offset);
-                var offset1 = completionText.IndexOf(char.ToUpperInvariant(character), offset);
-                if (offset0 == -1 && offset1 == -1)
-                    return false;
-                if (offset1 == -1)
-                    offset = offset0 + 1;
-                else if (offset0 == -1)
-                    offset = offset1 + 1;
-                else
-                    offset = Mathf.Min(offset0, offset1) + 1;
-            }
-            return true;
-        }
-        public static int Levenshtein(int[,] distance, string a, string b, Func<char, char, bool> areEqual) {
-            Check.That(distance != null);
-
-            var maxLength = (a: distance.GetLength(0) - 1, b: distance.GetLength(1) - 1);
-            Check.That(maxLength.a >= 0);
-            Check.That(maxLength.b >= 0);
-
-            Check.That(a != null);
-            Check.That(b != null);
-
-            // If strings are longer than we can handle - just return int.MaxValue.
-            if (a.Length > maxLength.a || b.Length > maxLength.b)
-                return int.MaxValue;
-
-            if (a.Length == 0)
-                return b.Length;
-            if (b.Length == 0)
-                return a.Length;
-
-            for (var i = 0; i <= a.Length; distance[i, 0] = i++) {}
-            for (var j = 0; j <= b.Length; distance[0, j] = j++) {}
-
-            for (var i = 1; i <= a.Length; i++)
-            for (var j = 1; j <= b.Length; j++) {
-                var cost = areEqual(b[j - 1], a[i - 1]) ? 0 : 1;
-                distance[i, j] = Mathf.Min(
-                    Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
-                    distance[i - 1, j - 1] + cost);
-            }
-            return distance[a.Length, b.Length];
-        }
-        public static bool MatchCase(char a, char b) {
-            return a == b;
-        }
-        public static bool IgnoreCase(char a, char b) {
-            return char.ToUpperInvariant(a) == char.ToUpperInvariant(b);
+            throw new CheckException();
         }
     }
 }

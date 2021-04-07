@@ -1,7 +1,7 @@
 grammar CommandLine;
 
 styles: style* EOF;
-style: string color boolean boolean boolean; 
+style: (string | Identifier) color boolean boolean boolean; 
 
 commands: statement* EOF;
 statement: noOperation	| command;

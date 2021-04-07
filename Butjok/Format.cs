@@ -3,22 +3,22 @@ using System.Text;
 using UnityEngine;
 
 namespace Butjok {
-    public partial class CommandLine {
+    public static class Format {
 
-        private static char DecToHex(int value, char startLetter = 'a') {
-            if (0 <= value && value <= 9) 
+        public static char DecToHex(int value, char startLetter = 'a') {
+            if (0 <= value && value <= 9)
                 return (char) ('0' + value);
-            if (10 <= value && value <= 15) 
+            if (10 <= value && value <= 15)
                 return (char) (startLetter + value - 10);
             throw new CheckException(value.ToString());
         }
-        private static void DecToHex(int value, out char hex0, out char hex1, char startLetter = 'a') {
+        public static void DecToHex(int value, out char hex0, out char hex1, char startLetter = 'a') {
             Check.That(0 <= value && value <= 255, value.ToString);
 
             hex0 = DecToHex(value >> 4, startLetter);
             hex1 = DecToHex(value & 0xf, startLetter);
         }
-        private static string ToHex(Color color, bool alwaysIncludeAlpha = false) {
+        public static string ToHex(Color color, bool alwaysIncludeAlpha = false) {
 
             var r = Mathf.RoundToInt(color.r * 255);
             var g = Mathf.RoundToInt(color.g * 255);
@@ -35,16 +35,16 @@ namespace Butjok {
             var rgb = canBeShort ? $"{r0}{g0}{b0}" : $"{r0}{r1}{g0}{g1}{b0}{b1}";
             return alwaysIncludeAlpha || a != 255 ? rgb + (canBeShort ? $"{a0}" : $"{a0}{a1}") : rgb;
         }
-        private static string Format(bool value) {
+        public static string Boolean(bool value) {
             return value ? "true" : "false";
         }
-        private static string Format(int value) {
+        public static string Integer(int value) {
             return value.ToString();
         }
-        private static string Format(float value) {
+        public static string Float(float value) {
             return value.ToString(NumberFormatInfo.InvariantInfo);
         }
-        private static string Format(string text) {
+        public static string String(string text) {
             if (text == null)
                 return "null";
 
@@ -73,28 +73,19 @@ namespace Butjok {
             sb.Append('"');
             return sb.ToString();
         }
-        private static string Format(Color color) {
+        public static string Color(Color color) {
             return '#' + ToHex(color);
         }
-        private static string Format(object value) {
+        public static string Value(object value) {
             return value switch {
                 null => "null",
-                bool booleanValue => Format(booleanValue),
-                int integerValue => Format(integerValue),
-                float floatValue => Format(floatValue),
-                string stringValue => Format(stringValue),
-                Color colorValue => Format(colorValue),
+                bool booleanValue => Boolean(booleanValue),
+                int integerValue => Integer(integerValue),
+                float floatValue => Float(floatValue),
+                string stringValue => String(stringValue),
+                Color colorValue => Color(colorValue),
                 _ => throw new CheckException(value.GetType().ToString())
             };
-        }
-        private static string Format(Command command) {
-            Check.That(command != null);
-
-            if (command.Type.IsProcedure())
-                return command.Name;
-            if (command.Type.IsVariable())
-                return $"{command.Name} {Format(command.Value)}";
-            throw new CheckException(command.Type.ToString());
         }
     }
 }

@@ -3,24 +3,24 @@ using System.Text;
 using UnityEngine;
 
 namespace Butjok {
-    public partial class CommandLine {
+    public static class Parse {
 
-        private static bool IsHex(char c) {
+        public static bool IsHex(char c) {
             return '0' <= c && c <= '9' || 'a' <= c && c <= 'f' || 'A' <= c && c <= 'F';
         }
-        private static int HexToDec(char hex) {
+        public static int HexToDec(char hex) {
             if ('0' <= hex && hex <= '9') return hex - '0';
             if ('a' <= hex && hex <= 'f') return 10 + hex - 'a';
             if ('A' <= hex && hex <= 'F') return 10 + hex - 'A';
             throw new CheckException(hex.ToString());
         }
-        private static int HexToDec(char hex0, char hex1) {
+        public static int HexToDec(char hex0, char hex1) {
             Check.That(IsHex(hex0), hex0.ToString);
             Check.That(IsHex(hex1), hex1.ToString);
 
             return HexToDec(hex0) * 16 + HexToDec(hex1);
         }
-        private static Color ParseHexColor(string text) {
+        public static Color HexColor(string text) {
             Check.That(!string.IsNullOrWhiteSpace(text));
 
             var offset = text[0] == '#' ? 1 : 0;
@@ -46,7 +46,7 @@ namespace Butjok {
                     throw new CheckException(text);
             }
         }
-        private static bool ParseBoolean(string text) {
+        public static bool Boolean(string text) {
             Check.That(!string.IsNullOrWhiteSpace(text));
 
             switch (text.ToUpperInvariant()) {
@@ -70,17 +70,17 @@ namespace Butjok {
                     throw new CheckException(text);
             }
         }
-        private static int ParseInteger(string text) {
+        public static int Integer(string text) {
             Check.That(!string.IsNullOrWhiteSpace(text));
 
             return int.Parse(text);
         }
-        private static float ParseFloat(string text) {
+        public static float Float(string text) {
             Check.That(!string.IsNullOrWhiteSpace(text));
 
             return float.Parse(text, CultureInfo.InvariantCulture);
         }
-        private static string ParseString(string text) {
+        public static string String(string text) {
 
             Check.That(!string.IsNullOrWhiteSpace(text));
             Check.That(text.Length >= 2);

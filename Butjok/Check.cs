@@ -12,7 +12,7 @@ namespace Butjok {
             [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0,
             [CallerMemberName] string memberName = null)
             : base(
-                $"{Path.GetFileName(filePath)}:{lineNumber}: {memberName}(): <i>{File.ReadLines(filePath).Skip(lineNumber - 1).Take(1).First().Trim()}</i>\n<b>{message}</b>") {}
+                $"{Path.GetFileName(filePath)}:{lineNumber}: {memberName}(): {File.ReadLines(filePath).Skip(lineNumber - 1).Take(1).First().Trim()}\n{message}\n") {}
     }
     
     public static class Check {
