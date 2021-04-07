@@ -13,7 +13,7 @@ namespace Butjok {
             throw new CheckException(value.ToString());
         }
         public static void DecToHex(int value, out char hex0, out char hex1, char startLetter = 'a') {
-            Check.That(0 <= value && value <= 255, value.ToString);
+            Assert.That(0 <= value && value <= 255, value.ToString);
 
             hex0 = DecToHex(value >> 4, startLetter);
             hex1 = DecToHex(value & 0xf, startLetter);

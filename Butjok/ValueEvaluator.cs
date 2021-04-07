@@ -10,7 +10,7 @@ namespace Butjok {
             _getVariableValue = getVariableValue;
         }
         public override object VisitVariable(CommandLineParser.VariableContext context) {
-            Check.That(_getVariableValue != null);
+            Assert.That(_getVariableValue != null);
             return _getVariableValue(context.GetText());
         }
         public override object VisitBoolean(CommandLineParser.BooleanContext context) {

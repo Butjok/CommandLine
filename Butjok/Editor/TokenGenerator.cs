@@ -19,7 +19,7 @@ namespace Butjok {
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Where(path => path.EndsWith("/Butjok/StyleProvider.ResetToDefaults.cs"))
                 .ToList();
-            Check.That(paths.Count == 1, paths.Count.ToString);
+            Assert.That(paths.Count == 1, paths.Count.ToString);
 
             var tokenTypes = CommandLineLexer.ruleNames
                 .Select((name, value) => (

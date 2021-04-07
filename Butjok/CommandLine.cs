@@ -1,14 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
 namespace Butjok {
-    
-    [RequireComponent(typeof(Commands))]
+
     [RequireComponent(typeof(StyleProvider))]
-    public partial class CommandLine : MonoBehaviour {
+    public class CommandLine : MonoBehaviour {
 
         [Serializable]
         private struct Completion {
@@ -17,7 +15,7 @@ namespace Butjok {
             public string underscores;
         }
 
-        [SerializeField] private Commands commands;
+        [SerializeField] private Commands commands = new Commands();
         [SerializeField] private GUISkin skin;
         [SerializeField] private StyleProvider styleProvider;
         [SerializeField] private SyntaxHighlighting syntaxHighlighting;
@@ -27,15 +25,12 @@ namespace Butjok {
         [SerializeField] private string coloredInput;
         [SerializeField] private string underscores;
         private readonly List<(string Name, string Text, string Colored, string Underscores)> _completions =
-            new List<(string,string,string,string)>();
+            new List<(string, string, string, string)>();
 
         private void Reset() {
 
             styleProvider = GetComponent<StyleProvider>();
-            Check.That(styleProvider);
-
-            commands = GetComponent<Commands>();
-            Check.That(commands);
+            Assert.That(styleProvider);
 
             skin = Resources.Load<GUISkin>("Butjok.CommandLine");
 
@@ -46,16 +41,11 @@ namespace Butjok {
 
         [SerializeField] private bool fly;
         private int Answer { get; set; } = 42;
-        
-        private void Awake() {
-            Check.That(skin);
-            
-            commands.Initialize();
 
-            syntaxHighlighting = new SyntaxHighlighting(commandName => {
-                var (found, command) = commands.Get(commandName);
-                return found ? (true, command.VariableGet != null) : (false, false);
-            }) 
+        private void Awake() {
+            Assert.That(skin);
+
+            syntaxHighlighting = new SyntaxHighlighting(commands.Exists, commands.IsVariable)
                 {Style = styleProvider.Style};
 
             for (var i = 0; i < 100; i++)
@@ -79,12 +69,12 @@ namespace Butjok {
             if (newInput != input) {
                 input = newInput;
                 _inputParser.Text = input;
-                syntaxHighlighting.HighlightSyntax(input, _inputParser.Tokens ,out coloredInput, out underscores);
+                syntaxHighlighting.HighlightSyntax(input, _inputParser.Tokens, out coloredInput, out underscores);
             }
 
             GUI.Label(rect, coloredInput, skin.GetStyle("ColoredInput"));
             GUI.Label(rect, underscores, skin.GetStyle("ColoredInput"));
-            
+
             switch (Event.current.type) {
 
                 case EventType.KeyDown:
@@ -101,7 +91,7 @@ namespace Butjok {
                                 state.cursorIndex, commands.Names)) {
 
                                 _completionParser.Text = name;
-                                syntaxHighlighting.HighlightSyntax(name, _completionParser.Tokens, 
+                                syntaxHighlighting.HighlightSyntax(name, _completionParser.Tokens,
                                     out var colored, out var underscores);
                                 _completions.Add((name, getSubstituted(), colored, underscores));
                             }
@@ -115,7 +105,8 @@ namespace Butjok {
                 var size = skin.GetStyle("Completion").CalcSize(new GUIContent(_completions[i].Colored));
                 var rect2 = new Rect(rect.xMin, rect.yMax + i * size.y, size.x, size.y);
 
-                GUI.Label(rect2, $"{_completions[i].Colored} --to-- '{_completions[i].Text}'" , skin.GetStyle("Completion"));
+                GUI.Label(rect2, $"{_completions[i].Colored} --to-- '{_completions[i].Text}'",
+                    skin.GetStyle("Completion"));
                 GUI.Label(rect2, _completions[i].Underscores, skin.GetStyle("CompletionUnderscores"));
             }
 

@@ -23,26 +23,32 @@ namespace Butjok {
 
         private class SyntaxErrorException : Exception {
             public int Line, Column;
-            public string Message;
+            public new string Message;
         }
 
-        private class Reader : CommandLineBaseListener, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
+        // This class cannot be moved to outer scope because it uses TokenStyle class.
+        // This is handy because we need a reference type here instead of Butjok.TokenStyle which is struct.
+        
+        private class StyleReader : CommandLineBaseListener, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
 
             private static Dictionary<string, int> _tokenTypes;
             private static List<TokenStyle> _newStyles = new List<TokenStyle>();
             private static TokenStyle _default = new TokenStyle();
             private static TokenStyle _error = new TokenStyle {color = Color.red};
             private static TokenStyle _unknownCommand = new TokenStyle();
-            private static TokenStyle _procedureCommand = new TokenStyle {color = Color.green};
-            private static TokenStyle _variableCommand = new TokenStyle {color = Color.yellow};
+            private static TokenStyle _procedureCommand = new TokenStyle
+                {color = Color.green};
+            private static TokenStyle _variableCommand = new TokenStyle
+                {color = Color.yellow};
+            private static TokenStyle _command = new TokenStyle {color = Color.cyan};
 
             private static readonly CommandLineLexer Lexer;
             private static readonly CommandLineParser Parser;
             private static readonly ValueEvaluator Evaluator;
 
-            public static readonly Reader Default = new Reader();
+            public static readonly StyleReader Default = new StyleReader();
 
-            static Reader() {
+            static StyleReader() {
 
                 Lexer = new CommandLineLexer(null);
                 Parser = new CommandLineParser(null);
@@ -54,14 +60,12 @@ namespace Butjok {
 
             public static void Load(string input, ref List<TokenStyle> styles,
                 ref TokenStyle @default, ref TokenStyle error,
-                ref TokenStyle unknownCommand, ref TokenStyle procedureCommand, ref TokenStyle variableCommand) {
+                ref TokenStyle unknownCommand, ref TokenStyle procedureCommand,
+                ref TokenStyle variableCommand) {
 
-                /*
-                 * Read token types from Lexer class into a dictionary: tokenTypeName => intValue.
-                 *
-                 * Cannot place this code in static Styles() constructor because if Unity has domain reload disabled
-                 * then _tokenTypes might contain old data.    
-                 */
+                // Read token types from Lexer class into a dictionary: tokenTypeName => intValue.
+                // Cannot place this code in static Styles() constructor because if Unity has domain reload disabled
+                // then _tokenTypes might contain old data.    
 
                 _tokenTypes = CommandLineLexer.ruleNames
                     .Select((name, value) => (
@@ -80,7 +84,8 @@ namespace Butjok {
                     ParseTreeWalker.Default.Walk(Default, Parser.styles());
                 }
                 catch (SyntaxErrorException e) {
-                    Debug.LogWarning($"Problem while reading styles file:\n{e.Message.Capitalise()} at line {e.Line}, position {e.Column}.\n");
+                    Debug.LogWarning(
+                        $"Problem while reading styles file:\n{e.Message.Capitalise()} at line {e.Line}, position {e.Column}.\n");
                     return;
                 }
 
@@ -104,7 +109,7 @@ namespace Butjok {
             }
 
             public override void EnterStyle(CommandLineParser.StyleContext context) {
-                Check.That(_tokenTypes != null);
+                Assert.That(_tokenTypes != null);
 
                 TokenStyle style;
                 if (context.@string() == null) {
@@ -118,6 +123,9 @@ namespace Butjok {
                             break;
                         case "UnknownCommand":
                             style = _unknownCommand;
+                            break;
+                        case "Command":
+                            style = _command;
                             break;
                         case "ProcedureCommand":
                             style = _procedureCommand;
@@ -157,28 +165,23 @@ namespace Butjok {
         [SerializeField] private TokenStyle @default = new TokenStyle();
         [SerializeField] private TokenStyle error = new TokenStyle {color = Color.red};
         [SerializeField] private TokenStyle unknownCommand = new TokenStyle();
+        [SerializeField] private TokenStyle command = new TokenStyle {color = Color.magenta};
         [SerializeField] private TokenStyle procedureCommand = new TokenStyle {color = Color.green};
         [SerializeField] private TokenStyle variableCommand = new TokenStyle {color = Color.yellow};
         [SerializeField] private List<TokenStyle> styles;
 
         private static Butjok.TokenStyle ToStruct(TokenStyle style) {
-            return new Butjok.TokenStyle {
-                Type = style.type,
-                Color = style.color,
-                Bold = style.bold,
-                Italic = style.italic,
-                IsKeyword = style.isKeyword
-            };
+            return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
         }
-        public Style Style => new Style {
-            Default = ToStruct(@default),
-            Error = ToStruct(error),
-            UnknownCommand = ToStruct(unknownCommand),
-            ProcedureCommand = ToStruct(procedureCommand),
-            VariableCommand = ToStruct(variableCommand),
-            Styles = styles.Select(ToStruct).ToList()
-        };
-        
+        public Style Style => new Style(
+            styles.Select(ToStruct).ToList(),
+            ToStruct(@default),
+            ToStruct(error),
+            ToStruct(unknownCommand),
+            ToStruct(procedureCommand),
+            ToStruct(variableCommand),
+            ToStruct(command));
+
         [ContextMenu("Load From File")]
         private void LoadFromFile() {
             if (!file) {
@@ -194,24 +197,42 @@ namespace Butjok {
                 Load(file.text);
         }
         public void Load(string input) {
-            Reader.Load(input,
+            StyleReader.Load(input,
                 ref styles, ref @default, ref error, ref unknownCommand, ref procedureCommand, ref variableCommand);
         }
     }
 
-    public struct TokenStyle {
-        public int Type;
-        public Color Color;
-        public bool Bold;
-        public bool Italic;
-        public bool IsKeyword;
+    public readonly struct TokenStyle {
+        public readonly int Type;
+        public readonly Color Color;
+        public readonly bool Bold;
+        public readonly bool Italic;
+        public readonly bool IsKeyword;
+        public TokenStyle(int type, Color color, bool bold, bool italic, bool isKeyword) {
+            Type = type;
+            Color = color;
+            Bold = bold;
+            Italic = italic;
+            IsKeyword = isKeyword;
+        }
     }
-    public struct Style {
-        public List<TokenStyle> Styles;
-        public TokenStyle Default;
-        public TokenStyle Error;
-        public TokenStyle UnknownCommand;
-        public TokenStyle ProcedureCommand;
-        public TokenStyle VariableCommand;
+    public readonly struct Style {
+        public readonly IReadOnlyList<TokenStyle> Styles;
+        public readonly TokenStyle Default;
+        public readonly TokenStyle Error;
+        public readonly TokenStyle UnknownCommand;
+        public readonly TokenStyle Command;
+        public readonly TokenStyle ProcedureCommand;
+        public readonly TokenStyle VariableCommand;
+        public Style(IReadOnlyList<TokenStyle> styles, TokenStyle @default, TokenStyle error, TokenStyle unknownCommand,
+            TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+            Styles = styles;
+            Default = @default;
+            Error = error;
+            UnknownCommand = unknownCommand;
+            ProcedureCommand = procedureCommand;
+            VariableCommand = variableCommand;
+            Command = command;
+        }
     }
 }

@@ -4,11 +4,13 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements.Experimental;
 using Object = UnityEngine.Object;
 
 namespace Butjok {
 
-    public class Commands : MonoBehaviour {
+    [Serializable]
+    public class Commands {
 
         // Even values indicate procedure.
         private enum CommandType {
@@ -23,140 +25,128 @@ namespace Butjok {
             public string[] arguments;
             public string debugComment;
             public Object debugUnityObject;
-            public UnityEvent<Func<object, object>> unityEvent;
+            public UnityEvent<Arguments> unityEvent;
             public object TargetObject;
             public FieldInfo FieldInfo;
             public PropertyInfo PropertyInfo;
             public Func<object> Getter;
             public Action<object> Setter;
             public MethodInfo MethodInfo;
-            public Action<Func<object, object>> Lambda;
+            public Action<Arguments> Lambda;
         }
 
-        [SerializeField] private List<Command> list;
+        [SerializeField] private List<Command> list = new List<Command>();
         private SortedDictionary<string, Command> _cache;
-        private Dictionary<Command, Dictionary<string, int>> _arguments;
 
         public IEnumerable<string> Names => _cache.Keys;
 
         private static readonly List<string> List = new List<string>();
 
-        private void Reset() {
-            list = new List<Command>();
-        }
-
-        public void Initialize() {
-            Check.That(_cache == null);
-            Check.That(_arguments == null);
-
+        public Commands() {
             _cache = new SortedDictionary<string, Command>();
             foreach (var c in list) {
-                ValidateCommand(name, c.type, c.arguments, c.unityEvent, c.TargetObject, c.FieldInfo, c.PropertyInfo,
+                ValidateCommand(c.name, c.type, c.arguments, c.unityEvent, c.TargetObject, c.FieldInfo, c.PropertyInfo,
                     c.Getter, c.MethodInfo, c.Lambda);
-                Check.That(!_cache.ContainsKey(c.name), c.name.ToString);
+                Assert.That(!_cache.ContainsKey(c.name), c.name.ToString);
             }
-            _arguments = new Dictionary<Command, Dictionary<string, int>>();
             foreach (var c in list)
-                CacheCommand(c);
+                _cache.Add(c.name, c);
         }
 
-        public (bool Found, Butjok.Command Command) Get(string name) {
-            Check.That(!string.IsNullOrWhiteSpace(name));
-            Check.That(_cache != null);
-            Check.That(_arguments != null);
+        public bool Exists(string name) {
+            Assert.That(!string.IsNullOrWhiteSpace(name));
+            Assert.That(_cache != null);
+            return _cache.ContainsKey(name);
+        }
+        private void AssertExists(string name, out Command command) {
+            Assert.That(Exists(name));
+            command = _cache[name];
+        }
+        
+        public bool IsVariable(string name) {
+            AssertExists(name, out var command);
+            return (int) command.type % 2 == 1;
+        }
+        
+        public void Invoke(string name, params object[] values) {
+            AssertExists(name, out var command);
 
-            var result = new Butjok.Command {Name = name};
-            if (!_cache.TryGetValue(name, out var command))
-                return (false, new Butjok.Command());
-
+            var arguments = new Arguments(values, command.arguments);
             switch (command.type) {
                 case CommandType.Method:
-                    result.Procedure = arguments
-                        => command.MethodInfo.Invoke(command.TargetObject, new object[] {arguments});
+                    command.MethodInfo.Invoke(command.TargetObject, new object[] {arguments});
                     break;
                 case CommandType.Lambda:
-                    result.Procedure = values => command.Lambda(MakeArgumentsGetter(command, values));
+                    command.Lambda.Invoke(arguments);
                     break;
                 case CommandType.UnityEvent:
-                    result.Procedure = values => command.unityEvent?.Invoke(MakeArgumentsGetter(command, values));
-                    break;
-                case CommandType.Field:
-                    result.VariableGet = () => command.FieldInfo.GetValue(command.TargetObject);
-                    result.VariableSet = value => command.FieldInfo.SetValue(command.TargetObject, value);
-                    break;
-                case CommandType.Property:
-                    result.VariableGet = () => command.PropertyInfo.GetValue(command.TargetObject);
-                    if (command.PropertyInfo.SetMethod != null)
-                        result.VariableSet = value => command.PropertyInfo.SetValue(command.TargetObject, value);
-                    break;
-                case CommandType.GetSet:
-                    result.VariableGet = command.Getter;
-                    result.VariableSet = command.Setter;
+                    command.unityEvent.Invoke(arguments);
                     break;
                 default:
-                    throw new CheckException(command.type.ToString());
+                    throw new CheckException(name);
             }
-            return (true, result);
         }
+        
+        public object GetValue(string name) {
+            AssertExists(name, out var command);
 
-        private Func<object, object> MakeArgumentsGetter(Command command, object[] values) {
-            Check.That(command != null);
-            Check.That(values != null);
-
-            return value => {
-
-                if (value == null)
-                    return values.Length;
-
-                if (value is int index) {
-                    Check.That(index >= 0, () => $"{command.name}: invalid argument index: {index}.");
-                    Check.That(index < values.Length, ()
-                        => $"{command.name}: argument index {index} is outside valid range 0..{values.Length - 1} (inclusive).");
-                    return values[index];
-                }
-                if (value is string name) {
-                    var foundArguments = _arguments.TryGetValue(command, out var arguments);
-                    Check.That(foundArguments, () => $"{command.name}: command does not have named arguments.");
-                    Check.That(arguments != null, command.name.ToString);
-                    var foundArgument = arguments.TryGetValue(name, out var index2);
-                    Check.That(foundArgument, () => $"{command.name}: unknown argument '{name}'.");
-                    Check.That(index2 < values.Length, () => $"{command.name}: missing value for argument '{name}'.");
-                    return values[index2];
-                }
-
-                throw new CheckException(value.GetType().ToString());
-            };
+            switch (command.type) {
+                case CommandType.Field:
+                    return command.FieldInfo.GetValue(command.TargetObject);
+                case CommandType.Property:
+                    return command.PropertyInfo.GetValue(command.TargetObject);
+                case CommandType.GetSet:
+                    return command.Getter();
+                default:
+                    throw new CheckException(name);
+            }
         }
+        
+        public void SetValue(string name, object value) {
+            AssertExists(name, out var command);
 
-        public static readonly MemberInfo Null = typeof(Commands).GetMember("Null")[0];
+            switch (command.type) {
+                case CommandType.Field:
+                    command.FieldInfo.SetValue(command.TargetObject, value);
+                    break;
+                case CommandType.Property:
+                    command.PropertyInfo.SetValue(command.TargetObject, value);
+                    break;
+                case CommandType.GetSet:
+                    command.Getter();
+                    break;
+                default:
+                    throw new CheckException(name);
+            }
+        }
 
         public void Add(string name = null, string help = null, string[] arguments = null, string debugComment = null,
-            UnityEvent<Func<object, object>> unityEvent = null, object targetObject = null, FieldInfo fieldInfo = null,
+            UnityEvent<Arguments> unityEvent = null, object targetObject = null, FieldInfo fieldInfo = null,
             PropertyInfo propertyInfo = null, Func<object> getter = null, Action<object> setter = null,
-            MethodInfo methodInfo = null, Action<Func<object, object>> lambda = null) {
+            MethodInfo methodInfo = null, Action<Arguments> lambda = null) {
 
             var type = CommandType.Invalid;
             if (unityEvent != null) {
                 type = CommandType.UnityEvent;
             }
             if (fieldInfo != null) {
-                Check.That(type == CommandType.Invalid);
+                Assert.That(type == CommandType.Invalid);
                 type = CommandType.Field;
             }
             if (propertyInfo != null) {
-                Check.That(type == CommandType.Invalid);
+                Assert.That(type == CommandType.Invalid);
                 type = CommandType.Property;
             }
             if (getter != null) {
-                Check.That(type == CommandType.Invalid);
+                Assert.That(type == CommandType.Invalid);
                 type = CommandType.GetSet;
             }
             if (methodInfo != null) {
-                Check.That(type == CommandType.Invalid);
+                Assert.That(type == CommandType.Invalid);
                 type = CommandType.Method;
             }
             if (lambda != null) {
-                Check.That(type == CommandType.Invalid);
+                Assert.That(type == CommandType.Invalid);
                 type = CommandType.Lambda;
             }
 
@@ -220,13 +210,12 @@ namespace Butjok {
                 Lambda = lambda
             };
             list.Add(command);
-            CacheCommand(command);
+            _cache.Add(command.name, command);
         }
 
         private static void ValidateCommand(string name, CommandType type, string[] arguments,
-            UnityEvent<Func<object, object>> unityEvent, object targetObject, FieldInfo fieldInfo,
-            PropertyInfo propertyInfo, Func<object> getter, MethodInfo methodInfo,
-            Action<Func<object, object>> lambda) {
+            UnityEvent<Arguments> unityEvent, object targetObject, FieldInfo fieldInfo, PropertyInfo propertyInfo,
+            Func<object> getter, MethodInfo methodInfo, Action<Arguments> lambda) {
 
             switch (type) {
 
@@ -234,44 +223,44 @@ namespace Butjok {
                     throw new CheckException(name);
 
                 case CommandType.Method:
-                    Check.That(methodInfo != null);
-                    Check.That(methodInfo.IsStatic == (targetObject == null));
+                    Assert.That(methodInfo != null);
+                    Assert.That(methodInfo.IsStatic == (targetObject == null));
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
                     break;
 
                 case CommandType.Lambda:
-                    Check.That(!string.IsNullOrWhiteSpace(name));
-                    Check.That(lambda != null);
+                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    Assert.That(lambda != null);
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
                     break;
 
                 case CommandType.UnityEvent:
-                    Check.That(!string.IsNullOrWhiteSpace(name));
-                    Check.That(unityEvent != null);
+                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    Assert.That(unityEvent != null);
                     if (arguments != null && arguments.Length > 0)
                         ValidateArguments(arguments);
                     break;
 
                 case CommandType.Field:
-                    Check.That(fieldInfo != null);
-                    Check.That(fieldInfo.IsStatic == (targetObject == null));
+                    Assert.That(fieldInfo != null);
+                    Assert.That(fieldInfo.IsStatic == (targetObject == null));
                     break;
 
                 case CommandType.Property:
-                    Check.That(propertyInfo != null);
-                    Check.That(propertyInfo.GetMethod != null);
-                    Check.That(propertyInfo.GetMethod.IsStatic == (targetObject == null));
+                    Assert.That(propertyInfo != null);
+                    Assert.That(propertyInfo.GetMethod != null);
+                    Assert.That(propertyInfo.GetMethod.IsStatic == (targetObject == null));
                     if (propertyInfo.SetMethod != null) {
-                        Check.That(propertyInfo.SetMethod.IsStatic == propertyInfo.GetMethod.IsStatic);
-                        Check.That(propertyInfo.SetMethod.IsStatic == (targetObject == null));
+                        Assert.That(propertyInfo.SetMethod.IsStatic == propertyInfo.GetMethod.IsStatic);
+                        Assert.That(propertyInfo.SetMethod.IsStatic == (targetObject == null));
                     }
                     break;
 
                 case CommandType.GetSet:
-                    Check.That(!string.IsNullOrWhiteSpace(name));
-                    Check.That(getter != null);
+                    Assert.That(!string.IsNullOrWhiteSpace(name));
+                    Assert.That(getter != null);
                     break;
 
                 default:
@@ -280,16 +269,16 @@ namespace Butjok {
         }
 
         private static void ValidateArguments(string[] arguments) {
-            Check.That(arguments != null);
+            Assert.That(arguments != null);
 
             foreach (var argument in arguments) {
-                Check.That(!string.IsNullOrWhiteSpace(argument));
-                Check.That(arguments.Count(name => name == argument) == 1, argument.ToString);
+                Assert.That(!string.IsNullOrWhiteSpace(argument));
+                Assert.That(arguments.Count(name => name == argument) == 1, argument.ToString);
             }
         }
 
         private static string MakeName(MemberInfo memberInfo) {
-            Check.That(memberInfo != null);
+            Assert.That(memberInfo != null);
 
             List.Clear();
             for (var type = memberInfo.DeclaringType; type != null; type = type.DeclaringType)
@@ -298,52 +287,55 @@ namespace Butjok {
             return string.Join(".", List) + "." + memberInfo.Name;
         }
 
-        private void CacheCommand(Command command) {
-            Check.That(command != null);
-            Check.That(command.type != CommandType.Invalid);
-
-            _cache.Add(command.name, command);
-
-            if ((int) command.type % 2 == 0 && command.arguments != null && command.arguments.Length > 0) {
-                _arguments.Add(command, command.arguments
-                    .Select((name, index) => (Name: name, Index: index))
-                    .ToDictionary(pair => pair.Name, pair => pair.Index));
-            }
-        }
-
         public void Remove(string name) {
-            Check.That(!string.IsNullOrWhiteSpace(name));
+            Assert.That(!string.IsNullOrWhiteSpace(name));
 
             var index = list.FindIndex(c => c.name == name);
-            Check.That(index != -1, name.ToString);
+            Assert.That(index != -1, name.ToString);
             var command = list[index];
             list.RemoveAt(index);
-            Check.That(_cache.ContainsKey(name));
+            Assert.That(_cache.ContainsKey(name));
             _cache.Remove(name);
-            if (_arguments.ContainsKey(command))
-                _arguments.Remove(command);
         }
     }
 
-    public struct Command {
-        public string Name;
-        public Action<object[]> Procedure;
-        public Func<object> VariableGet;
-        public Action<object> VariableSet;
+    public readonly struct Arguments {
+        public readonly IReadOnlyList<object> Values;
+        public readonly IReadOnlyList<string> Names;
+        public Arguments(IReadOnlyList<object> values, IReadOnlyList<string> names) {
+            Values = values;
+            Names = names;
+        }
     }
 
     public static class ArgumentsExtensions {
-        public static int Count(this Func<object, object> arguments) {
-            return (int) arguments(null);
+        public static int Count(this Arguments arguments) {
+            Assert.That(arguments.Values != null);
+            return arguments.Values.Count;
         }
-        public static T Get<T>(this Func<object, object> arguments, object index) {
-            var value = arguments(index);
+        public static T Get<T>(this Arguments arguments, int index) {
+            Assert.That(arguments.Values != null);
+            Assert.That(index >= 0);
+            Assert.That(index < arguments.Values.Count);
+            var value = arguments.Values[index];
             try {
                 return (T) value;
             }
             catch (InvalidCastException) {
-                throw new CheckException($"Cannot cast argument '{index}' from {value.GetType()} to {typeof(T)}.");
+                throw new CheckException((index, typeof(T), value.GetType()).ToString());
             }
+        }
+        public static T Get<T>(this Arguments arguments, string name) {
+            Assert.That(arguments.Names != null);
+
+            var index = -1;
+            for (var i = 0; i < arguments.Names.Count; i++)
+                if (arguments.Names[i] == name) {
+                    index = i;
+                    break;
+                }
+            Assert.That(index != -1);
+            return Get<T>(arguments, index);
         }
     }
 }

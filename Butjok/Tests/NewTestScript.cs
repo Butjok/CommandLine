@@ -1,6 +1,7 @@
 using NUnit.Framework;
 using UnityEngine;
 using Butjok;
+using Assert = Butjok.Assert;
 
 public class NewTestScript {
     // A Test behaves as an ordinary method
@@ -11,7 +12,7 @@ public class NewTestScript {
         var text = "";
         for (var i = 0; i < source.Length; i++) {
             var (found,token) = parsed.TokenAt(i);
-            Check.That(found, i.ToString);
+            Assert.That(found, i.ToString);
             text +=
                 $"{i}: {CommandLineLexer.DefaultVocabulary.GetDisplayName(token.Type)}: {source.Substring(token.Start, token.Stop - token.Start + 1)}\n";
         }
@@ -27,6 +28,6 @@ public class NewTestScript {
             lambda: arguments => {
                 Debug.Log($"name: {arguments.Get<string>("name")}, age: {arguments.Get<int>("age")}");
             });
-        commands.Get("yolo").Command.Procedure(new object[] {false, 123, true, false, new string('a', 10)});
+        commands.Invoke("yolo", false, 123, true, false, new string('a', 10));
     }
 }

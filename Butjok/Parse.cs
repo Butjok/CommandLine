@@ -15,13 +15,13 @@ namespace Butjok {
             throw new CheckException(hex.ToString());
         }
         public static int HexToDec(char hex0, char hex1) {
-            Check.That(IsHex(hex0), hex0.ToString);
-            Check.That(IsHex(hex1), hex1.ToString);
+            Assert.That(IsHex(hex0), hex0.ToString);
+            Assert.That(IsHex(hex1), hex1.ToString);
 
             return HexToDec(hex0) * 16 + HexToDec(hex1);
         }
         public static Color HexColor(string text) {
-            Check.That(!string.IsNullOrWhiteSpace(text));
+            Assert.That(!string.IsNullOrWhiteSpace(text));
 
             var offset = text[0] == '#' ? 1 : 0;
             var length = text.Length - offset;
@@ -47,7 +47,7 @@ namespace Butjok {
             }
         }
         public static bool Boolean(string text) {
-            Check.That(!string.IsNullOrWhiteSpace(text));
+            Assert.That(!string.IsNullOrWhiteSpace(text));
 
             switch (text.ToUpperInvariant()) {
                 case "TRUE":
@@ -71,21 +71,21 @@ namespace Butjok {
             }
         }
         public static int Integer(string text) {
-            Check.That(!string.IsNullOrWhiteSpace(text));
+            Assert.That(!string.IsNullOrWhiteSpace(text));
 
             return int.Parse(text);
         }
         public static float Float(string text) {
-            Check.That(!string.IsNullOrWhiteSpace(text));
+            Assert.That(!string.IsNullOrWhiteSpace(text));
 
             return float.Parse(text, CultureInfo.InvariantCulture);
         }
         public static string String(string text) {
 
-            Check.That(!string.IsNullOrWhiteSpace(text));
-            Check.That(text.Length >= 2);
-            Check.That(text[0] == '"');
-            Check.That(text[text.Length - 1] == '"');
+            Assert.That(!string.IsNullOrWhiteSpace(text));
+            Assert.That(text.Length >= 2);
+            Assert.That(text[0] == '"');
+            Assert.That(text[text.Length - 1] == '"');
 
             var sb = new StringBuilder();
             for (var i = 1; i < text.Length - 1;)

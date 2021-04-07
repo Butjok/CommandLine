@@ -9,10 +9,10 @@ namespace Butjok {
         public static IEnumerable<(string Name, Func<string> GetSubstituted)>
             Find(string text, Func<int, (bool Found, Token Token)> getTokenAt, int cursor,
                 IEnumerable<string> commands) {
-            Check.That(text != null);
-            Check.That(getTokenAt != null);
-            Check.That(cursor >= 0);
-            Check.That(cursor <= text.Length); // Cursor can be at the end of the string.
+            Assert.That(text != null);
+            Assert.That(getTokenAt != null);
+            Assert.That(cursor >= 0);
+            Assert.That(cursor <= text.Length); // Cursor can be at the end of the string.
 
             if (string.IsNullOrWhiteSpace(text))
                 return commands.Select(name => (name, (Func<string>) (() => name + ' ')));

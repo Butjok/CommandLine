@@ -9,15 +9,15 @@ namespace Butjok {
         private static readonly int[,] Distance = new int[MaxTokenLength + 1, MaxTokenLength + 1];
         
         public static int Compute(string a, string b, Func<char, char, bool> areEqual, int[,] distance = null) {
-            Check.That(areEqual != null);
+            Assert.That(areEqual != null);
 
             distance ??= Distance;
             var maxLength = (a: distance.GetLength(0) - 1, b: distance.GetLength(1) - 1);
-            Check.That(maxLength.a >= 0);
-            Check.That(maxLength.b >= 0);
+            Assert.That(maxLength.a >= 0);
+            Assert.That(maxLength.b >= 0);
 
-            Check.That(a != null);
-            Check.That(b != null);
+            Assert.That(a != null);
+            Assert.That(b != null);
 
             // If strings are longer than we can handle - just return int.MaxValue.
             if (a.Length > maxLength.a || b.Length > maxLength.b)

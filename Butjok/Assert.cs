@@ -15,7 +15,7 @@ namespace Butjok {
                 $"{Path.GetFileName(filePath)}:{lineNumber}: {memberName}(): {File.ReadLines(filePath).Skip(lineNumber - 1).Take(1).First().Trim()}\n{message}\n") {}
     }
     
-    public static class Check {
+    public static class Assert {
         
         public static void That(bool condition, Func<string> message = null,
             [CallerFilePath] string filePath = null, [CallerLineNumber] int lineNumber = 0,
