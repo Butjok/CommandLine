@@ -4,7 +4,6 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.UIElements.Experimental;
 using Object = UnityEngine.Object;
 
 namespace Butjok {
@@ -62,12 +61,12 @@ namespace Butjok {
             Assert.That(Exists(name));
             command = _cache[name];
         }
-        
+
         public bool IsVariable(string name) {
             AssertExists(name, out var command);
             return (int) command.type % 2 == 1;
         }
-        
+
         public void Invoke(string name, params object[] values) {
             AssertExists(name, out var command);
 
@@ -86,7 +85,7 @@ namespace Butjok {
                     throw new CheckException(name);
             }
         }
-        
+
         public object GetValue(string name) {
             AssertExists(name, out var command);
 
@@ -101,7 +100,7 @@ namespace Butjok {
                     throw new CheckException(name);
             }
         }
-        
+
         public void SetValue(string name, object value) {
             AssertExists(name, out var command);
 

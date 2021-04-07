@@ -3,16 +3,11 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
-/*
- * These enums are only used in Settings class.
- * They are used to display a proper drop list of command types to assign colors etc.
- */
-
 namespace Butjok {
 
     public static class TokenGenerator {
 
-        [MenuItem("Window/Command Line/Generate default style")]
+        [MenuItem("Window/Command Line/Generate tokens")]
         private static void Regenerate() {
 
             var paths = AssetDatabase.FindAssets("")
@@ -32,12 +27,24 @@ namespace Butjok {
 
             var code =
                 $@"/*
- * Generated automatically from Antlr lexer class. See Window > Command Line > Regenerate styles.
+ * Generated automatically from Antlr lexer class. See Window > Command Line > Generate tokens.
  */
 
 using System.Collections.Generic;
 
 namespace Butjok {{
+
+    public readonly struct TokenInfo {{
+        public readonly string Name;
+        public readonly int Type;
+        public readonly string Literal;
+        public TokenInfo(string name, int type, string literal) {{
+            Name = name;
+            Type = type;
+            Literal = literal;
+        }}
+    }}
+
     public static class TokenInfos {{
         public static IReadOnlyList<TokenInfo> Infos = new List<TokenInfo> {{
             new TokenInfo(""BlockComment"", 19, null),

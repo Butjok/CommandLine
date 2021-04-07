@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -7,7 +6,6 @@ using UnityEngine;
 
 namespace Butjok {
 
-    [RequireComponent(typeof(StyleProvider))]
     public class CommandLine : MonoBehaviour {
 
         [Serializable]
@@ -19,7 +17,7 @@ namespace Butjok {
 
         [SerializeField] private Commands commands = new Commands();
         [SerializeField] private GUISkin skin;
-        [SerializeField] private StyleProvider styleProvider;
+        [SerializeField] private StyleSettings styleSettings;
         [SerializeField] private SyntaxHighlighting syntaxHighlighting;
         private Style _style;
 
@@ -32,14 +30,14 @@ namespace Butjok {
 
         private IEnumerable<string> AllCompletions => commands.Names
             .Concat(TokenInfos.Infos.Where(info
-                => info.Literal != null && _style.Styles.TryGetValue(info.Type, out var tokenStyle) &&
-                   tokenStyle.IsKeyword)
+                    => info.Literal != null && _style.Styles.TryGetValue(info.Type, out var tokenStyle) &&
+                       tokenStyle.IsKeyword)
                 .Select(info => info.Literal));
 
         private void Reset() {
 
-            styleProvider = GetComponent<StyleProvider>();
-            Assert.That(styleProvider);
+            styleSettings = Resources.Load<StyleSettings>("Butjok.CommandLine.StyleSettings");
+            Assert.That(styleSettings);
 
             skin = Resources.Load<GUISkin>("Butjok.CommandLine");
 
@@ -54,7 +52,7 @@ namespace Butjok {
         private void Awake() {
             Assert.That(skin);
 
-            _style = styleProvider.Provide;
+            _style = styleSettings.Provide;
             syntaxHighlighting = new SyntaxHighlighting(commands.Exists, commands.IsVariable)
                 {Style = _style};
 

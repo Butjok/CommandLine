@@ -8,7 +8,8 @@ using UnityEngine;
 
 namespace Butjok {
 
-    public class StyleProvider : MonoBehaviour {
+    [CreateAssetMenu(fileName = "StyleSettings")]
+    public class StyleSettings : ScriptableObject {
 
         [Serializable]
         private class TokenStyle {
@@ -174,7 +175,7 @@ namespace Butjok {
             return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
         }
         public Style Provide => new Style(
-            styles.ToDictionary(style => style.type, style => ToStruct(style)),
+            styles.ToDictionary(style => style.type, ToStruct),
             ToStruct(@default),
             ToStruct(error),
             ToStruct(unknownCommand),
@@ -240,10 +241,10 @@ namespace Butjok {
         public readonly TokenStyle Command;
         public readonly TokenStyle ProcedureCommand;
         public readonly TokenStyle VariableCommand;
-        public Style(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error, 
+        public Style(IReadOnlyDictionary<int, TokenStyle> styles, TokenStyle @default, TokenStyle error,
             TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
             Assert.That(styles != null);
-            
+
             Styles = styles;
             Default = @default;
             Error = error;

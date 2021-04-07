@@ -1,9 +1,9 @@
 using UnityEngine;
 
 namespace Butjok {
-    
+
     public static class Fuzzy {
-    
+
         public static bool Match(string text, string completionText) {
             var offset = 0;
             foreach (var character in text) {

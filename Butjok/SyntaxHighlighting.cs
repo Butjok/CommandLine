@@ -8,12 +8,7 @@ namespace Butjok {
 
     public class SyntaxHighlighting {
 
-        private IReadOnlyDictionary<int, TokenStyle> _cachedStyles = new Dictionary<int, TokenStyle>();
-        private TokenStyle _default;
-        private TokenStyle _error;
-        private TokenStyle _unknownCommand;
-        private TokenStyle _procedureCommand;
-        private TokenStyle _variableCommand;
+        public Style Style;
         private readonly Func<string, bool> _exists;
         private readonly Func<string, bool> _isVariable;
 
@@ -23,17 +18,6 @@ namespace Butjok {
         public SyntaxHighlighting(Func<string, bool> exists, Func<string, bool> isVariable) {
             _exists = exists;
             _isVariable = isVariable;
-        }
-
-        public Style Style {
-            set {
-                _cachedStyles = value.Styles;
-                _default = value.Default;
-                _error = value.Error;
-                _unknownCommand = value.UnknownCommand;
-                _procedureCommand = value.ProcedureCommand;
-                _variableCommand = value.VariableCommand;
-            }
         }
 
         public void HighlightSyntax(string text, IEnumerable<Token> tokens,
@@ -48,11 +32,11 @@ namespace Butjok {
                 Assert.That(token.Stop < text.Length);
                 Assert.That(token.Start <= token.Stop);
 
-                var tokenStyle = _cachedStyles.TryGetValue(token.Type, out var result) ? result : _default;
+                var tokenStyle = Style.Styles.TryGetValue(token.Type, out var result) ? result : Style.Default;
 
                 Color? underscoreColor = null;
                 switch (token.Type) {
-                    
+
                     case CommandLineLexer.ShortHexRgbColor:
                     case CommandLineLexer.ShortHexRgbaColor:
                     case CommandLineLexer.LongHexRgbColor:
@@ -65,16 +49,17 @@ namespace Butjok {
                         if (_exists == null || _isVariable == null)
                             break;
                         var name = text.Substring(token.Start, token.Stop - token.Start + 1);
-                        var exists = _exists(name);
-                        if (!exists) {
-                            tokenStyle = _unknownCommand;
-                            break;
-                        }
-                        tokenStyle = _isVariable(name) ? _variableCommand : _procedureCommand;
+                        tokenStyle = !_exists(name)
+                            ? Style.UnknownCommand
+                            : _isVariable == null
+                                ? Style.Command
+                                : _isVariable(name)
+                                    ? Style.VariableCommand
+                                    : Style.ProcedureCommand;
                         break;
 
                     case TokenConstants.InvalidType:
-                        tokenStyle = _error;
+                        tokenStyle = Style.Error;
                         break;
                 }
 

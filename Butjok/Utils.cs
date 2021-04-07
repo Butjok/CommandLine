@@ -1,5 +1,5 @@
 namespace Butjok {
-    
+
     public static class Swap {
         public static void Values<T>(ref T a, ref T b) {
             var temp = a;
