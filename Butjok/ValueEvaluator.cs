@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 namespace Butjok {
-    
+
     [CLSCompliant(false)]
     public class ValueEvaluator : CommandLineBaseVisitor<object> {
 

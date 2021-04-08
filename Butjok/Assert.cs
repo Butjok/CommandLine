@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 // ReSharper disable ExplicitCallerInfoArgument
 
 namespace Butjok {
-    
+
     public class CheckException : Exception {
 
         public CheckException(string message = null,

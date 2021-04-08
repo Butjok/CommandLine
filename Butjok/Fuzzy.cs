@@ -7,7 +7,7 @@ namespace Butjok {
         public static bool Match(string pattern, string text) {
             Assert.That(pattern != null);
             Assert.That(text != null);
-            
+
             var offset = 0;
             foreach (var character in pattern) {
                 var offset0 = text.IndexOf(char.ToLowerInvariant(character), offset);

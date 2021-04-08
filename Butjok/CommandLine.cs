@@ -9,7 +9,6 @@ namespace Butjok {
     public class CommandLine : MonoBehaviour {
 
         [SerializeField] protected Commands commands;
-        protected ColorTheme ColorTheme;
         protected InputField InputField;
         [SerializeField] protected Vector2Int completionsRadius = new Vector2Int(10, 10);
         protected CompletionsManager CompletionsManager;
@@ -23,16 +22,19 @@ namespace Butjok {
         [SerializeField] private Texture keywordIcon;
         [SerializeField] private Texture variableIcon;
         [SerializeField] private Texture procedureIcon;
+        private Colorizer _colorizer;
 
         protected virtual void Awake() {
             Assert.That(skin);
             Assert.That(colorThemeSettings);
 
             commands.Initialize();
-            ColorTheme = colorThemeSettings.Provide;
 
-            InputField = new InputField(skin.GetStyle("Input"), skin.GetStyle("ColoredInput"), commands.Exists,
-                commands.IsVariable, ColorTheme, "Butjok.CommandLine");
+            var colorTheme = colorThemeSettings.Provide;
+            var colorizer = new Colorizer(colorTheme, commands, new TextParser());
+
+            InputField = new InputField(skin.GetStyle("Input"), skin.GetStyle("ColoredInput"), "Butjok.CommandLine",
+                colorizer);
 
             RefreshCompletions = true;
             InputField.Edited += arguments => {
@@ -40,17 +42,15 @@ namespace Butjok {
                 CompletionsManager.Clear();
             };
 
-            CompletionsManager = new CompletionsManager(() => commands.Names, ColorTheme);
-            CompletionsDrawer = new CompletionsDrawer(ColorTheme, commands.Exists, commands.IsVariable,
-                commands.GetValue,
-                commands.GetArguments, commands.GetHelpText, skin.GetStyle("Completion"),
+            CompletionsManager = new CompletionsManager(() => commands.Names);
+            CompletionsDrawer = new CompletionsDrawer(colorTheme, commands, skin.GetStyle("Completion"),
                 skin.GetStyle("CompletionUnderscores"), skin.GetStyle("CompletionInfo"),
                 skin.GetStyle("SelectedCompletion"), Complete, skin.GetStyle("CompletionUnderscores"),
-                keywordIcon, variableIcon, procedureIcon);
+                keywordIcon, procedureIcon, variableIcon, colorizer);
 
             InputFieldHeight = skin.GetStyle("Input").CalcHeight(GUIContent.none, Screen.width);
 
-            Interpreter = new Interpreter(commands.Invoke, commands.GetValue, commands.SetValue, commands.IsVariable);
+            Interpreter = new Interpreter(commands);
 
             // Add default commands.
             commands.RegisterFrom(Assembly.GetExecutingAssembly());
@@ -73,7 +73,7 @@ namespace Butjok {
             }
         }
 
-        protected virtual void Complete(Completion completion) {
+        protected virtual void Complete(ICompletion completion) {
             InputField.Text = completion.GetSubstituted();
             NewCursorPosition = completion.Cursor;
         }

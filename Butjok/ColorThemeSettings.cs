@@ -6,9 +6,9 @@ using System.Text;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
+
 #endif
 
 namespace Butjok {
@@ -18,15 +18,18 @@ namespace Butjok {
     public class ColorThemeSettings : ScriptableObject {
 
         [Serializable]
-        private class TokenStyle {
+        private class TokenStyle : Colorizer.ITokenStyle {
             // This is used only as a header for list element in Inspector.
             [HideInInspector] public string name = nameof(TokenConstants.InvalidType);
-            
+
             [HideInInspector] public int type = TokenConstants.InvalidType;
             public Color color = Color.white;
-            public bool bold;
-            public bool italic;
-            public bool isKeyword;
+            public bool isBold;
+            public bool isItalic;
+
+            public bool IsBold => isBold;
+            public bool IsItalic => isItalic;
+            public Color Color => color;
         }
 
         private class SyntaxErrorException : Exception {
@@ -37,7 +40,8 @@ namespace Butjok {
         // This class cannot be moved to outer scope because it uses TokenStyle class.
         // This is handy because we need a reference type here instead of Butjok.TokenStyle which is struct.
 
-        private class StyleReader : CommandLineBaseListener, IAntlrErrorListener<int>, IAntlrErrorListener<IToken> {
+        private class StyleReader : CommandLineBaseListener, IAntlrErrorListener<int>,
+            IAntlrErrorListener<Antlr4.Runtime.IToken> {
 
             private static Dictionary<string, int> _tokenTypes;
             private static List<TokenStyle> _newStyles = new List<TokenStyle>();
@@ -110,7 +114,8 @@ namespace Butjok {
                 int charPositionInLine, string msg, RecognitionException e) {
                 throw new SyntaxErrorException {Line = line, Column = charPositionInLine, Message = msg};
             }
-            public void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line,
+            public void SyntaxError(TextWriter output, IRecognizer recognizer, Antlr4.Runtime.IToken offendingSymbol,
+                int line,
                 int charPositionInLine, string msg, RecognitionException e) {
                 throw new SyntaxErrorException {Line = line, Column = charPositionInLine, Message = msg};
             }
@@ -162,9 +167,8 @@ namespace Butjok {
                 var isKeyword = (bool) Evaluator.Visit(context.boolean(2));
 
                 style.color = color;
-                style.bold = bold;
-                style.italic = italic;
-                style.isKeyword = isKeyword;
+                style.isBold = bold;
+                style.isItalic = italic;
             }
         }
 
@@ -180,17 +184,14 @@ namespace Butjok {
         [SerializeField] private TokenStyle variableCommand;
         [SerializeField] private List<TokenStyle> tokens;
 
-        private static Butjok.TokenStyle ToStruct(TokenStyle style) {
-            return new Butjok.TokenStyle(style.type, style.color, style.bold, style.italic, style.isKeyword);
-        }
         public ColorTheme Provide => new ColorTheme(
-            tokens.ToDictionary(style => style.type, ToStruct),
-            ToStruct(@default),
-            ToStruct(error),
-            ToStruct(unknownCommand),
-            ToStruct(procedureCommand),
-            ToStruct(variableCommand),
-            ToStruct(command));
+            tokens.ToDictionary(style => style.type, style => (Colorizer.ITokenStyle) style),
+            @default,
+            error,
+            unknownCommand,
+            procedureCommand,
+            variableCommand,
+            command);
 
         [ContextMenu("Load From File")]
         private void LoadFromFile() {
@@ -223,13 +224,8 @@ namespace Butjok {
             variableCommand = new TokenStyle {color = Color.yellow};
 
             tokens.Clear();
-            foreach (var info in TokenInfo.All) {
-                tokens.Add(new TokenStyle {
-                    type = info.Type,
-                    name = info.Name,
-                    isKeyword = info.LiteralName != null && info.LiteralName.All(char.IsLetterOrDigit)
-                });
-            }
+            foreach (var info in TokenInfo.All.Values)
+                tokens.Add(new TokenStyle {type = info.Type, name = info.Name,});
         }
         private void Reset() {
             tokens = new List<TokenStyle>();
@@ -238,38 +234,41 @@ namespace Butjok {
                 Load(input.text);
         }
         public void Load(string input) {
-            StyleReader.Load(input, ref tokens, ref @default, ref error, ref unknownCommand, ref procedureCommand, 
+            StyleReader.Load(input, ref tokens, ref @default, ref error, ref unknownCommand, ref procedureCommand,
                 ref variableCommand, ref command);
         }
     }
 
     [CLSCompliant(false)]
-    public readonly struct TokenStyle {
-        public readonly int Type;
-        public readonly Color Color;
-        public readonly bool Bold;
-        public readonly bool Italic;
-        public readonly bool IsKeyword;
-        public TokenStyle(int type, Color color, bool bold, bool italic, bool isKeyword) {
+    public readonly struct TokenStyle : Colorizer.ITokenStyle {
+
+        public int Type { get; }
+        public Color Color { get; }
+        public bool IsBold { get; }
+        public bool IsItalic { get; }
+
+        public TokenStyle(int type, Color color, bool isBold, bool isItalic) {
             Type = type;
             Color = color;
-            Bold = bold;
-            Italic = italic;
-            IsKeyword = isKeyword;
+            IsBold = isBold;
+            IsItalic = isItalic;
         }
     }
-    
+
     [CLSCompliant(false)]
-    public readonly struct ColorTheme {
-        public readonly IReadOnlyDictionary<int, TokenStyle> Tokens;
-        public readonly TokenStyle Default;
-        public readonly TokenStyle Error;
-        public readonly TokenStyle UnknownCommand;
-        public readonly TokenStyle Command;
-        public readonly TokenStyle ProcedureCommand;
-        public readonly TokenStyle VariableCommand;
-        public ColorTheme(IReadOnlyDictionary<int, TokenStyle> tokens, TokenStyle @default, TokenStyle error,
-            TokenStyle unknownCommand, TokenStyle procedureCommand, TokenStyle variableCommand, TokenStyle command) {
+    public readonly struct ColorTheme : Colorizer.IColorTheme {
+
+        public IReadOnlyDictionary<int, Colorizer.ITokenStyle> Tokens { get; }
+        public Colorizer.ITokenStyle Default { get; }
+        public Colorizer.ITokenStyle Error { get; }
+        public Colorizer.ITokenStyle UnknownCommand { get; }
+        public Colorizer.ITokenStyle Command { get; }
+        public Colorizer.ITokenStyle ProcedureCommand { get; }
+        public Colorizer.ITokenStyle VariableCommand { get; }
+
+        public ColorTheme(IReadOnlyDictionary<int, Colorizer.ITokenStyle> tokens, Colorizer.ITokenStyle @default,
+            Colorizer.ITokenStyle error, Colorizer.ITokenStyle unknownCommand, Colorizer.ITokenStyle procedureCommand,
+            Colorizer.ITokenStyle variableCommand, Colorizer.ITokenStyle command) {
             Assert.That(tokens != null);
 
             Tokens = tokens;

@@ -15,7 +15,7 @@ public class Tests {
             var (found, token) = parser.TokenAt(i);
             Assert.That(found, i.ToString);
             text +=
-                $"{i}: {CommandLineLexer.DefaultVocabulary.GetDisplayName(token.Type)}: {source.Substring(token.Start, token.Stop - token.Start + 1)}\n";
+                $"{i}: {CommandLineLexer.DefaultVocabulary.GetDisplayName(token.Type)}: {token.FindText()}\n";
         }
         Debug.Log(text);
     }

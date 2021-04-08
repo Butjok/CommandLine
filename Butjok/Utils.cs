@@ -28,19 +28,19 @@ namespace Butjok {
     }
 
     public static class Math {
-        
+
         public static int PositiveMod(int a, int b) {
-            Assert.That(b>0);
+            Assert.That(b > 0);
             return (a % b + b) % b;
         }
-        
-        public static (int Low, int High) SlidingWindow(int elementsCount, (int Backward, int Forward) radius, 
+
+        public static (int Low, int High) SlidingWindow(int elementsCount, (int Backward, int Forward) radius,
             int centerIndex) {
             Assert.That(centerIndex >= 0);
             Assert.That(centerIndex < elementsCount);
             Assert.That(radius.Backward >= 0);
             Assert.That(radius.Forward >= 0);
-			
+
             var low = centerIndex - radius.Backward;
             var high = centerIndex + radius.Forward;
 

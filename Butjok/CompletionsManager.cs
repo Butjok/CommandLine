@@ -9,22 +9,22 @@ namespace Butjok {
 
         private readonly TextParser _parser;
         private readonly List<string> _keywords;
-        private readonly List<Completion> _completions;
+        private readonly List<ICompletion> _completions;
         private readonly Func<IEnumerable<string>> _getCommandNames;
         public int Index { get; private set; }
 
-        public CompletionsManager(Func<IEnumerable<string>> getCommandNames, ColorTheme colorTheme) {
+        public CompletionsManager(Func<IEnumerable<string>> getCommandNames) {
             Assert.That(getCommandNames != null);
 
             _parser = new TextParser();
 
-            _keywords = TokenInfo.All
-                .Where(info => colorTheme.Tokens.TryGetValue(info.Type, out var tokenStyle) && tokenStyle.IsKeyword)
+            _keywords = TokenInfo.All.Values
+                .Where(info => info.IsKeyword)
                 .Select(info => info.LiteralName)
                 .ToList();
             _getCommandNames = getCommandNames;
 
-            _completions = new List<Completion>();
+            _completions = new List<ICompletion>();
             Index = -1;
         }
 
@@ -44,7 +44,7 @@ namespace Butjok {
 
         public void NextCompletion(int shift = 1) {
 
-            if (_completions.Count == 0) 
+            if (_completions.Count == 0)
                 return;
 
             Index = Index == -1
@@ -56,7 +56,7 @@ namespace Butjok {
             _completions.Clear();
             Index = -1;
         }
-        
-        public IReadOnlyList<Completion> Completions => _completions;
+
+        public IReadOnlyList<ICompletion> Completions => _completions;
     }
 }

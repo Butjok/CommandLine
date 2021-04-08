@@ -9,9 +9,19 @@ using Object = UnityEngine.Object;
 
 namespace Butjok {
 
+    public interface ICommands {
+        bool IsVariable(string name);
+        void Invoke(string name, params object[] values);
+        object GetValue(string name);
+        void SetValue(string name, object value);
+        bool Exists(string name);
+        IReadOnlyList<string> GetArguments(string name);
+        string GetHelpText(string name);
+    }
+
     [Serializable]
     [CLSCompliant(false)]
-    public class Commands {
+    public class Commands : ICommands {
 
         // Even values indicate procedure.
         private enum CommandType {
@@ -40,7 +50,7 @@ namespace Butjok {
         private SortedDictionary<string, Command> _cache;
 
         public IEnumerable<string> Names => _cache.Keys;
-        
+
         public void Initialize() {
             _cache = new SortedDictionary<string, Command>();
             foreach (var c in list) {
@@ -118,7 +128,8 @@ namespace Butjok {
                     break;
                 case CommandType.Property:
                     if (command.PropertyInfo.SetMethod == null) {
-                        Debug.LogWarning($"Command '{name}' refers to a read-only property '{command.PropertyInfo.Name}' in {command.TargetObject ?? command.PropertyInfo.DeclaringType}. Skipping.");
+                        Debug.LogWarning(
+                            $"Command '{name}' refers to a read-only property '{command.PropertyInfo.Name}' in {command.TargetObject ?? command.PropertyInfo.DeclaringType}. Skipping.");
                         return;
                     }
                     command.PropertyInfo.SetValue(command.TargetObject, value);
@@ -145,7 +156,8 @@ namespace Butjok {
             return command.arguments == null || command.arguments.Length == 0 ? null : command.arguments;
         }
 
-        public void Add(string name = null, string helpText = null, string[] arguments = null, string debugComment = null,
+        public void Add(string name = null, string helpText = null, string[] arguments = null,
+            string debugComment = null,
             UnityEvent<Arguments> unityEvent = null, object targetObject = null, FieldInfo fieldInfo = null,
             PropertyInfo propertyInfo = null, Func<object> getter = null, Action<object> setter = null,
             MethodInfo methodInfo = null, Action<Arguments> lambda = null) {
@@ -273,7 +285,7 @@ namespace Butjok {
                 name = MakeName(memberInfo);
 
             Assert.That(IdentifierRegex.IsMatch(name), name.ToString);
-            Assert.That(TokenInfo.All.All(info => name != info.LiteralName), name.ToString);
+            Assert.That(TokenInfo.All.Values.All(info => name != info.LiteralName), name.ToString);
         }
         private static void ValidateArguments(string[] arguments) {
             Assert.That(arguments != null);

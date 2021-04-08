@@ -10,7 +10,7 @@ namespace Butjok {
         public readonly string[] Arguments;
         public readonly string HelpText;
 
-        public CommandAttribute(string name = null, string[] arguments = null, string helpText=null) {
+        public CommandAttribute(string name = null, string[] arguments = null, string helpText = null) {
             Name = name;
             Arguments = arguments;
             HelpText = helpText;

@@ -6,31 +6,52 @@ using UnityEngine;
 
 namespace Butjok {
 
-    [CLSCompliant(false)]
-    public class SyntaxHighlighting {
+    public interface IColorizer {
+        void Colorize(string text, out string richText, out string underscores);
+    }
 
-        private readonly ColorTheme _colorTheme;
-        private readonly Func<string, bool> _exists;
-        private readonly Func<string, bool> _isVariable;
+    [CLSCompliant(false)]
+    public class Colorizer : IColorizer {
+
+        public interface ITextParser {
+            IEnumerable<IToken> Parse(string text);
+        }
+        public interface ITokenStyle {
+            bool IsBold { get; }
+            bool IsItalic { get; }
+            Color Color { get; }
+        }
+        public interface IColorTheme {
+            IReadOnlyDictionary<int, ITokenStyle> Tokens { get; }
+            ITokenStyle Default { get; }
+            ITokenStyle UnknownCommand { get; }
+            ITokenStyle ProcedureCommand { get; }
+            ITokenStyle VariableCommand { get; }
+            ITokenStyle Error { get; }
+        }
+
+        private readonly IColorTheme _colorTheme;
+        private readonly ICommands _commands;
+        private readonly ITextParser _textParser;
 
         private static readonly StringBuilder Sb = new StringBuilder();
         private static readonly StringBuilder Sb2 = new StringBuilder();
 
-        public SyntaxHighlighting(ColorTheme colorTheme, Func<string, bool> exists, Func<string, bool> isVariable) {
+        public Colorizer(IColorTheme colorTheme, ICommands commands, ITextParser textParser) {
             Assert.That(colorTheme.Tokens != null);
+            Assert.That(textParser != null);
 
             _colorTheme = colorTheme;
-            _exists = exists;
-            _isVariable = isVariable;
+            _commands = commands;
+            _textParser = textParser;
         }
 
-        public void Colorize(string text, IEnumerable<Token> tokens, out string richText, out string underscores) {
+        public void Colorize(string text, out string richText, out string underscores) {
             Assert.That(text != null);
-            Assert.That(tokens != null);
 
             Sb.Clear();
             Sb2.Clear();
-            foreach (var token in tokens) {
+            foreach (var token in _textParser.Parse(text)) {
 
                 Assert.That(text != null);
                 Assert.That(token.Start >= 0);
@@ -48,21 +69,19 @@ namespace Butjok {
                     case CommandLineLexer.ShortHexRgbaColor:
                     case CommandLineLexer.LongHexRgbColor:
                     case CommandLineLexer.LongHexRgbaColor: {
-                        underscoreColor = Parse.HexColor(text.Substring(token.Start, token.Stop - token.Start + 1));
+                        underscoreColor = Parse.HexColor(token.FindText());
                         break;
                     }
 
                     case CommandLineLexer.Identifier:
-                        if (_exists == null || _isVariable == null)
+                        if (_commands == null)
                             break;
-                        var name = text.Substring(token.Start, token.Stop - token.Start + 1);
-                        tokenStyle = !_exists(name)
+                        var name = token.FindText();
+                        tokenStyle = !_commands.Exists(name)
                             ? _colorTheme.UnknownCommand
-                            : _isVariable == null
-                                ? _colorTheme.Command
-                                : _isVariable(name)
-                                    ? _colorTheme.VariableCommand
-                                    : _colorTheme.ProcedureCommand;
+                            : _commands.IsVariable(name)
+                                ? _colorTheme.VariableCommand
+                                : _colorTheme.ProcedureCommand;
                         break;
 
                     case TokenConstants.InvalidType:
@@ -73,14 +92,14 @@ namespace Butjok {
                 var colorTag = $"<color=#{ColorUtility.ToHtmlStringRGBA(tokenStyle.Color)}>";
                 for (var i = token.Start; i <= token.Stop; i++) {
                     Sb.Append(colorTag);
-                    if (tokenStyle.Bold)
+                    if (tokenStyle.IsBold)
                         Sb.Append("<b>");
-                    if (tokenStyle.Italic)
+                    if (tokenStyle.IsItalic)
                         Sb.Append("<i>");
                     Sb.Append(text[i]);
-                    if (tokenStyle.Italic)
+                    if (tokenStyle.IsItalic)
                         Sb.Append("</i>");
-                    if (tokenStyle.Bold)
+                    if (tokenStyle.IsBold)
                         Sb.Append("</b>");
                     Sb.Append("</color>");
                 }

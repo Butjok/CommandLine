@@ -12,21 +12,18 @@ namespace Butjok {
         private string _underscores = "";
         private readonly GUIStyle _style;
         private readonly GUIStyle _overlayStyle;
-        private readonly SyntaxHighlighting _syntaxHighlighting;
-        private readonly TextParser _parser = new TextParser();
+        private readonly IColorizer _colorizer;
         public event Action<(string Old, string New)> Edited;
 
-        public InputField(GUIStyle style, GUIStyle overlayStyle, Func<string, bool> exists,
-            Func<string, bool> isVariable, ColorTheme colorScheme, string controlName) {
+        public InputField(GUIStyle style, GUIStyle overlayStyle, string controlName, IColorizer colorizer) {
             Assert.That(style != null);
             Assert.That(overlayStyle != null);
-            Assert.That(exists != null);
-            Assert.That(isVariable != null);
+            Assert.That(colorizer != null);
 
             _style = style;
             _controlName = controlName;
             _overlayStyle = overlayStyle;
-            _syntaxHighlighting = new SyntaxHighlighting(colorScheme, exists, isVariable);
+            _colorizer = colorizer;
         }
         public string Text {
             get => _text;
@@ -34,8 +31,7 @@ namespace Butjok {
                 Assert.That(value != null);
 
                 _text = value;
-                _parser.Parse(_text);
-                _syntaxHighlighting.Colorize(_text, _parser.Tokens, out _richText, out _underscores);
+                _colorizer.Colorize(_text, out _richText, out _underscores);
             }
         }
         public void Draw(Rect rectangle) {
