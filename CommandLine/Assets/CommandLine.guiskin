@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 1
   m_Script: {fileID: 12001, guid: 0000000000000000e000000000000000, type: 0}
-  m_Name: Console
+  m_Name: CommandLine
   m_EditorClassIdentifier: 
   m_Font: {fileID: 12800000, guid: c13dce40daf5c4760abbe4a2c0a920a0, type: 3}
   m_box:

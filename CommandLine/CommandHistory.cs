@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 
 namespace Butjok {
-    public static class ConsoleHistory
+    public static class CommandHistory
     {
         private static List<string> lines;
         private static int index;
@@ -13,14 +13,14 @@ namespace Butjok {
         public static void Initialize() {
             input = "";
             lines = new List<string>();
-            var serialized = PlayerPrefs.GetString(nameof(ConsoleHistory), null);
+            var serialized = PlayerPrefs.GetString(nameof(CommandHistory), null);
             if (serialized != null) 
                 lines.AddRange(serialized.Split('\n'));
             index = lines.Count;
         }
         public static void Save() {
             if (lines.Count > 0) 
-                PlayerPrefs.SetString(nameof(ConsoleHistory), string.Join("\n", lines));
+                PlayerPrefs.SetString(nameof(CommandHistory), string.Join("\n", lines));
         }
         public static void SetText(string text) {
             index = lines.Count;
@@ -40,7 +40,7 @@ namespace Butjok {
         [Command]
         public static void Clear() {
             lines.Clear();
-            PlayerPrefs.DeleteKey(nameof(ConsoleHistory));
+            PlayerPrefs.DeleteKey(nameof(CommandHistory));
         }
     }
 }

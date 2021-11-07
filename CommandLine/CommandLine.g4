@@ -1,4 +1,4 @@
-grammar Console;
+grammar CommandLine;
 
 input: command? EOF;
 command: Identifier argument*;

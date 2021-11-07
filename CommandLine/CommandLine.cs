@@ -28,7 +28,7 @@ namespace Butjok
         }
     }
 
-    public static class Console
+    public static class CommandLine
     {
         private class Listener : ConsoleBaseListener
         {

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Butjok
 {
-    public class ConsoleGUI : MonoBehaviour
+    public class CommandLineGUI : MonoBehaviour
     {
         public GUISkin guiSkin;
         [Command]
@@ -39,9 +39,9 @@ namespace Butjok
             index = -1;
             matches = new List<string>();
             action = null;
-            Console.Initialize();
+            CommandLine.Initialize();
             Commands.Initialize(includeNamespaceName);
-            ConsoleHistory.Initialize();
+            CommandHistory.Initialize();
             SyntaxHighlighting.Initialize();
         }
         public void AddCommand(MemberInfo memberInfo, string name = null, bool absolute = false) {
@@ -61,8 +61,8 @@ namespace Butjok
                     case KeyCode.DownArrow: {
                         Event.current.Use();
                         var offset = Event.current.keyCode == KeyCode.UpArrow ? -1 : 1;
-                        if (ConsoleHistory.Lookup(offset)) {
-                            input = ConsoleHistory.Text;
+                        if (CommandHistory.Lookup(offset)) {
+                            input = CommandHistory.Text;
                             index = -1;
                             FindCompletions();
                             action = () => {
@@ -80,8 +80,8 @@ namespace Butjok
                         break;
                     case KeyCode.Return:
                         Event.current.Use();
-                        ConsoleHistory.Add(input);
-                        Console.Execute(input);
+                        CommandHistory.Add(input);
+                        CommandLine.Execute(input);
                         input = "";
                         index = -1;
                         matches.Clear();
@@ -99,10 +99,10 @@ namespace Butjok
                         input = completion + ' ';
                         if (Commands.IsVariable(completion))
                             try {
-                                input += Console.Format(Commands.Invoke(completion, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>()));
+                                input += CommandLine.Format(Commands.Invoke(completion, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>()));
                             }
                             catch (MultipleObjectsException e) {
-                                input += Console.Format(e.values.Last());
+                                input += CommandLine.Format(e.values.Last());
                             }
                             catch (Exception) {
                                 // ignored
@@ -125,7 +125,7 @@ namespace Butjok
             input = GUI.TextField(rect, input);
             GUI.Label(rect, SyntaxHighlighting.Colorize(input));
             if (input != oldInput) {
-                ConsoleHistory.SetText(input);
+                CommandHistory.SetText(input);
                 index = -1;
                 FindCompletions();
             }
@@ -139,10 +139,10 @@ namespace Butjok
                 var info = "";
                 if (Commands.IsVariable(name))
                     try {
-                        info =  SyntaxHighlighting.Colorize(Console.Format(Commands.Invoke(name, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>())));
+                        info =  SyntaxHighlighting.Colorize(CommandLine.Format(Commands.Invoke(name, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>())));
                     }
                     catch (MultipleObjectsException e) {
-                        info = "[" + string.Join(", ", e.values.Take(maximumMultipleObjects).Select(value => SyntaxHighlighting.Colorize(Console.Format(value))));
+                        info = "[" + string.Join(", ", e.values.Take(maximumMultipleObjects).Select(value => SyntaxHighlighting.Colorize(CommandLine.Format(value))));
                         if (e.values.Length > maximumMultipleObjects)
                             info += "...";
                         info += "]";
@@ -190,7 +190,7 @@ namespace Butjok
         }
 
         private void OnApplicationQuit() {
-            ConsoleHistory.Save();
+            CommandHistory.Save();
         }
     }
 }
