@@ -2,6 +2,8 @@ CommandLine for Unity
 =
 A command line prompt for Unity projects.
 
+![](Screenshot.png)
+
 Features
 -
 - Auto-completion: navigate suggestions with Tab and Shift-Tab.
@@ -17,7 +19,18 @@ Features
 
 Usage
 -
+Add `[Command]` attribute to methods, properties or fields you want to expose:
+
     [Command]
     public static void MyCommand() {
         Debug.Log("Hello from CommandLine!");
+    }
+
+    [Command]
+    public bool flag = true;
+
+    [Command]
+    public Color Color {
+        get => { ... }
+        set => { ... }
     }
