@@ -3,6 +3,7 @@ CommandLine for Unity
 A command line prompt for Unity projects.
 
 ![](Screenshot.png)
+![](Animation.gif)
 
 Features
 -
