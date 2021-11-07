@@ -12,6 +12,8 @@ Features
 - Works for multiple `MonoBehaviour`s in a scene.
 - Command names are generated automatically.
 - Partial name matching.
+- Unary and binary operators: `!`,`~`,`+`,`-`,`*`,`/`,`%`.
+- Variable and command interpolation: `MyCommand $Variable` or `MyCommand ${MyOtherCommand 1 2 "hello"}`
 
 Usage
 -
