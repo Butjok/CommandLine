@@ -20,11 +20,9 @@ Features
 Usage
 -
 Add `[Command]` attribute to methods, properties or fields you want to expose:
-
+```c#
     [Command]
-    public static void MyCommand() {
-        Debug.Log("Hello from CommandLine!");
-    }
+    public static void MyCommand() { ... }
 
     [Command]
     public bool flag = true;
@@ -34,3 +32,7 @@ Add `[Command]` attribute to methods, properties or fields you want to expose:
         get => { ... }
         set => { ... }
     }
+    
+    [Command]
+    public void SomeInstanceMethod() { ... }
+```
