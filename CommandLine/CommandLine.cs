@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
@@ -62,7 +63,7 @@ namespace Butjok
                 return context.GetText() == "true";
             }
             public override object VisitReal(ConsoleParser.RealContext context) {
-                return float.Parse(context.GetText());
+                return float.Parse(context.GetText(), CultureInfo.InvariantCulture);
             }
             public override object VisitParenthesis(ConsoleParser.ParenthesisContext context) {
                 return Visit(context.value());
@@ -187,6 +188,7 @@ namespace Butjok
                     return sb.ToString();
                 }
                 case null: return "null";
+                case float real: return real.ToString(CultureInfo.InvariantCulture);
                 default: return value.ToString();
             }
         }
