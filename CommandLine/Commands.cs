@@ -106,7 +106,8 @@ namespace Butjok
             void AddCommand(MemberInfo memberInfo) {
                 Validate(memberInfo);
                 var prefix = (includeNamespaceName ? memberInfo.DeclaringType.FullName : memberInfo.DeclaringType.Name) + '.';
-                var name = prefix + memberInfo.Name;
+                // Nested classes have + separators instead of dots
+                var name = (prefix + memberInfo.Name).Replace('+', '.');
                 commands[name] = memberInfo;
             }
 

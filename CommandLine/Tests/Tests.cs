@@ -33,6 +33,9 @@ namespace Butjok.CommandLine
         [TestCase("5 % 3", ExpectedResult = 2)]
         [TestCase("3 + 4 * 5", ExpectedResult = 23)]
         [TestCase("\"hello\\\"world\\r\\n\\f\"", ExpectedResult = "hello\"world\r\n\f")]
+        [TestCase("3 + 4 * 5", ExpectedResult = 23)]
+        [TestCase("!$Butjok.CommandLine.Tests.Overloaded.instance", ExpectedResult = "not")]
+        [TestCase("$Butjok.CommandLine.Tests.Overloaded.instance + 2", ExpectedResult = "add")]
         public static object TestEvaluate(string input) {
             return Interpreter.Evaluate(input);
         }
@@ -54,6 +57,15 @@ namespace Butjok.CommandLine
         [TestCase("hello", "HELLO", true, ExpectedResult = 0)]
         public static int TestLevenshtein(string a, string b, bool ignoreCase = false) {
             return Levenshtein.Distance(a, b, ignoreCase);
+        }
+        
+        public class Overloaded
+        {
+            public static string operator !(Overloaded a) => "not";
+            public static string operator +(Overloaded a, object b) => "add";
+        
+            [Command]
+            public static Overloaded instance = new Overloaded();
         }
     }
 }
