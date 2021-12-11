@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Butjok
+namespace Butjok.CommandLine
 {
     public static class CommandHistory
     {
@@ -10,18 +10,21 @@ namespace Butjok
         private static int index;
         private static string input;
 
+        [Command]
+        public static string PlayerPrefsKey => typeof(CommandHistory).FullName;
+
         public static string Text => index == lines.Count ? input : lines[index];
         static CommandHistory() {
             input = "";
             lines = new List<string>();
-            var serialized = PlayerPrefs.GetString(nameof(CommandHistory), null);
+            var serialized = PlayerPrefs.GetString(PlayerPrefsKey, null);
             if (serialized != null)
                 lines.AddRange(serialized.Split('\n'));
             index = lines.Count;
         }
         public static void Save() {
             if (lines.Count > 0)
-                PlayerPrefs.SetString(nameof(CommandHistory), string.Join("\n", lines));
+                PlayerPrefs.SetString(PlayerPrefsKey, string.Join("\n", lines));
         }
         public static void SetText(string text) {
             index = lines.Count;

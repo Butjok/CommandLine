@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Butjok
+namespace Butjok.CommandLine
 {
     public static class Levenshtein
     {

@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Butjok;
+using Butjok.CommandLine;
 using UnityEngine;
 
 public class Demo : MonoBehaviour

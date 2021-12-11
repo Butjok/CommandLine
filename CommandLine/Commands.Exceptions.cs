@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.Serialization;
 
-namespace Butjok
+namespace Butjok.CommandLine
 {
     [Serializable]
     public class InvalidMemberException : Exception
