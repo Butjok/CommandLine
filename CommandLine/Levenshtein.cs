@@ -5,16 +5,15 @@ namespace Butjok
 {
     public static class Levenshtein
     {
-        public const int maxLength = 1000;
         private static int[,] distance;
 
         public static int Distance(string a, string b, bool ignoreCase = true) {
 
-            if (a.Length > maxLength || b.Length > maxLength)
-                throw new ArgumentException();
+            if (a == null) throw new ArgumentNullException(nameof(a));
+            if (b == null) throw new ArgumentNullException(nameof(b));
 
-            if (distance == null)
-                distance = new int[maxLength, maxLength];
+            if (distance == null || a.Length >= distance.GetLength(0) || b.Length >= distance.GetLength(1))
+                distance = new int[a.Length + 1, b.Length + 1];
 
             if (a.Length == 0)
                 return b.Length;
@@ -27,11 +26,8 @@ namespace Butjok
             for (var i = 1; i <= a.Length; i++)
             for (var j = 1; j <= b.Length; j++) {
 
-                var cost = (ignoreCase
-                    ? char.ToUpperInvariant(b[j - 1]) == char.ToUpperInvariant(a[i - 1])
-                    : b[j - 1] == a[i - 1])
-                    ? 0
-                    : 1;
+                var areEqual = ignoreCase ? char.ToUpperInvariant(b[j - 1]) == char.ToUpperInvariant(a[i - 1]) : b[j - 1] == a[i - 1];
+                var cost = areEqual ? 0 : 1;
 
                 distance[i, j] = Mathf.Min(
                     Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),

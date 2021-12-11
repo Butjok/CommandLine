@@ -3,7 +3,7 @@ guid: c13dce40daf5c4760abbe4a2c0a920a0
 TrueTypeFontImporter:
   externalObjects: {}
   serializedVersion: 4
-  fontSize: 32
+  fontSize: 16
   forceTextureCase: -2
   characterSpacing: 0
   characterPadding: 1
@@ -19,7 +19,7 @@ TrueTypeFontImporter:
   - {fileID: 12800000, guid: 5b0d96a34ca274f9aa3895edbff69487, type: 3}
   - {fileID: 12800000, guid: bcbfac7bd7d2f4eee8a594c0c8784b4d, type: 3}
   customCharacters: 
-  fontRenderingMode: 0
+  fontRenderingMode: 1
   ascentCalculationMode: 1
   useLegacyBoundsCalculation: 0
   shouldRoundAdvanceValue: 1

@@ -5,6 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - guiSkin: {fileID: 11400000, guid: cc28327acba3541d2be6ecb0c74f5061, type: 2}
+  - theme: {fileID: 11400000, guid: 127c55bbee55a4324aaa0c6b8a755152, type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

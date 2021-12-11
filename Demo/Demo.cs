@@ -23,4 +23,9 @@ public class Demo : MonoBehaviour
             ball.gameObject.SetActive(true);
         }
     }
+
+    [Command]
+    public static string PersistentDataPath => Application.persistentDataPath;
+    [Command]
+    public static float Random(float low, float high) => UnityEngine.Random.Range(low,high);
 }

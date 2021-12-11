@@ -2,7 +2,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Butjok {
+namespace Butjok
+{
     public static class CommandHistory
     {
         private static List<string> lines;
@@ -10,16 +11,16 @@ namespace Butjok {
         private static string input;
 
         public static string Text => index == lines.Count ? input : lines[index];
-        public static void Initialize() {
+        static CommandHistory() {
             input = "";
             lines = new List<string>();
             var serialized = PlayerPrefs.GetString(nameof(CommandHistory), null);
-            if (serialized != null) 
+            if (serialized != null)
                 lines.AddRange(serialized.Split('\n'));
             index = lines.Count;
         }
         public static void Save() {
-            if (lines.Count > 0) 
+            if (lines.Count > 0)
                 PlayerPrefs.SetString(nameof(CommandHistory), string.Join("\n", lines));
         }
         public static void SetText(string text) {
@@ -32,7 +33,7 @@ namespace Butjok {
             return oldIndex != index;
         }
         public static void Add(string text) {
-            if (!string.IsNullOrWhiteSpace(text) && (lines.Count == 0 || lines.Last() != text)) 
+            if (!string.IsNullOrWhiteSpace(text) && (lines.Count == 0 || lines.Last() != text))
                 lines.Add(text);
             SetText("");
         }

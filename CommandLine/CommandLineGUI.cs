@@ -5,58 +5,64 @@ using System.Reflection;
 using System.Text.RegularExpressions;
 using UnityEngine;
 
-namespace Butjok
+namespace Butjok.CommandLine
 {
     public class CommandLineGUI : MonoBehaviour
     {
+        public List<string> assemblies = new List<string> { "Assembly-CSharp", "CommandLine" };
         public GUISkin guiSkin;
+        public bool dontDestroyOnLoad = true;
+
+        public Theme theme;
+
+        [Command]
+        public string Theme {
+            get => theme.name;
+            set {
+                var loaded = Resources.Load<Theme>(value);
+                if (loaded)
+                    theme = loaded;
+                else
+                    Debug.LogWarning($"Could not load theme {Interpreter.Format(value)}.");
+            }
+        }
         [Command]
         public int radius = 5;
         [Command]
         public string prefixFormat = "[{0}/{1}] ";
         [Command]
         public bool includeNamespaceName = true;
-        public bool dontDestroyOnLoad = true;
         [Command]
-        public int maximumMultipleObjects = 3;
+        public int maximumMultipleValues = 3;
 
-        private string input;
-        private int index;
-        private List<string> matches;
+        private string input = "";
+        private int index = -1;
+        private List<string> matches = new List<string>();
         private bool initialized;
         private Action action;
-        
+
         private void Awake() {
+            if (initialized)
+                return;
+            initialized = true;
+
             if (dontDestroyOnLoad)
                 DontDestroyOnLoad(gameObject);
-            if (!initialized)
-                Initialize();
+
+            Commands.Fetch(assemblies.Select(Assembly.Load), includeNamespaceName);
         }
-        [Command]
-        private void Initialize() {
-            initialized = true;
-            input = "";
-            index = -1;
-            matches = new List<string>();
-            action = null;
-            CommandLine.Initialize();
-            Commands.Initialize(includeNamespaceName);
-            CommandHistory.Initialize();
-            SyntaxHighlighting.Initialize();
+
+        private void OnApplicationQuit() {
+            CommandHistory.Save();
         }
-        public void AddCommand(MemberInfo memberInfo, string name = null, bool absolute = false) {
-            if (!initialized)
-                Initialize();
-            var generatedName = Commands.GenerateName(memberInfo, new CommandAttribute(name, absolute), includeNamespaceName);
-            Commands.Add(generatedName, memberInfo);
-        }
-        
+
         private void OnGUI() {
-            
+
             GUI.skin = guiSkin;
 
             if (Event.current.type == EventType.KeyDown) {
                 switch (Event.current.keyCode) {
+
                     case KeyCode.UpArrow:
                     case KeyCode.DownArrow: {
                         Event.current.Use();
@@ -72,20 +78,25 @@ namespace Butjok
                         }
                         break;
                     }
+
                     case KeyCode.Escape:
                         Event.current.Use();
                         input = "";
                         index = -1;
                         matches.Clear();
                         break;
+
                     case KeyCode.Return:
                         Event.current.Use();
                         CommandHistory.Add(input);
-                        CommandLine.Execute(input);
+                        var value = Interpreter.Execute(input);
+                        if (value != null)
+                            Debug.Log(value);
                         input = "";
                         index = -1;
                         matches.Clear();
                         break;
+
                     case KeyCode.Tab: {
                         Event.current.Use();
                         if (matches.Count == 0) {
@@ -99,31 +110,33 @@ namespace Butjok
                         input = completion + ' ';
                         if (Commands.IsVariable(completion))
                             try {
-                                input += CommandLine.Format(Commands.Invoke(completion, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>()));
+                                input += Interpreter.Format(Commands.Invoke(completion));
                             }
                             catch (MultipleObjectsException e) {
-                                input += CommandLine.Format(e.values.Last());
+                                input += Interpreter.Format(e.values.Last());
                             }
                             catch (Exception) {
                                 // ignored
                             }
                         action = () => {
                             var textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-                            textEditor.cursorIndex = 999;
+                            textEditor.cursorIndex = int.MaxValue;
                             textEditor.selectIndex = completion.Length + 1;
                         };
                         break;
                     }
                 }
             }
+
             if (Event.current.type == EventType.Repaint && action != null) {
                 action();
                 action = null;
             }
+
             var oldInput = input;
             var rect = GUILayoutUtility.GetRect(new GUIContent(input), GUI.skin.textField, GUILayout.Width(Screen.width));
             input = GUI.TextField(rect, input);
-            GUI.Label(rect, SyntaxHighlighting.Colorize(input));
+            GUI.Label(rect, Colorizer.Colorize(input, theme));
             if (input != oldInput) {
                 CommandHistory.SetText(input);
                 index = -1;
@@ -139,11 +152,11 @@ namespace Butjok
                 var info = "";
                 if (Commands.IsVariable(name))
                     try {
-                        info =  SyntaxHighlighting.Colorize(CommandLine.Format(Commands.Invoke(name, Array.Empty<object>(), Enumerable.Empty<KeyValuePair<string, object>>())));
+                        info = Colorizer.Colorize(Interpreter.Format(Commands.Invoke(name)), theme);
                     }
                     catch (MultipleObjectsException e) {
-                        info = "[" + string.Join(", ", e.values.Take(maximumMultipleObjects).Select(value => SyntaxHighlighting.Colorize(CommandLine.Format(value))));
-                        if (e.values.Length > maximumMultipleObjects)
+                        info = "[" + string.Join(", ", e.values.Take(maximumMultipleValues).Select(value => Colorizer.Colorize(Interpreter.Format(value), theme)));
+                        if (e.values.Count > maximumMultipleValues)
                             info += "...";
                         info += "]";
                     }
@@ -151,19 +164,15 @@ namespace Butjok
                         while (e.InnerException != null)
                             e = e.InnerException;
                         info = $"<i>{e.Message.Split('\n')[0]}</i>";
-                        //throw;
                     }
-                name = SyntaxHighlighting.Colorize(name);
+                name = Colorizer.Colorize(name, theme);
                 GUILayout.Label(index == i
                     ? prefix.PadRight(prefixMaxLength) + $"<b>{name}</b> {info}"
                     : new string(' ', prefixMaxLength) + $"{name} {info}");
             }
         }
 
-        // todo: add completion at cursor position
         private void FindCompletions() {
-            var textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-            //Debug.Log(textEditor.cursorIndex);
             var pattern = string.Join("[^.]*", input.Select(c => Regex.Escape(c.ToString()))) + "[^.]*$";
             var regex = new Regex(pattern, RegexOptions.IgnoreCase);
             matches.Clear();
@@ -187,10 +196,6 @@ namespace Butjok
                 high = count - 1;
             }
             return (low, high);
-        }
-
-        private void OnApplicationQuit() {
-            CommandHistory.Save();
         }
     }
 }
