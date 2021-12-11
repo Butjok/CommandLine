@@ -20,3 +20,28 @@ MonoBehaviour:
     color: {r: 1, g: 1, b: 1, a: 1}
     bold: 0
     italic: 0
+  tokens:
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 24
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 20
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 6
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 8
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 16
+  - color: {r: 1, g: 1, b: 1, a: 1}
+    bold: 1
+    italic: 0
+    token: 9

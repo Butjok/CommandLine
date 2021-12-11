@@ -439,12 +439,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 116885834e0d4fa5b2e681b41c20f2b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  assemblies:
+  - Assembly-CSharp
+  - CommandLine
   guiSkin: {fileID: 11400000, guid: cc28327acba3541d2be6ecb0c74f5061, type: 2}
+  dontDestroyOnLoad: 1
+  theme: {fileID: 11400000, guid: 127c55bbee55a4324aaa0c6b8a755152, type: 2}
   radius: 5
   prefixFormat: '[{0}/{1}] '
   includeNamespaceName: 1
-  dontDestroyOnLoad: 1
-  maximumMultipleObjects: 3
+  maximumMultipleValues: 3
 --- !u!4 &1336839094
 Transform:
   m_ObjectHideFlags: 0
