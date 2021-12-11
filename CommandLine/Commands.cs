@@ -121,5 +121,12 @@ namespace Butjok
                     AddCommand(propertyInfo);
             }
         }
+
+        [Command]
+        public static string Info(string name) {
+            if (!commands.TryGetValue(name, out var command))
+                throw new CommandNotFoundException(name);
+            return $"{command.DeclaringType} :: {command}";
+        }
     }
 }
