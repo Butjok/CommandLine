@@ -12,7 +12,7 @@ namespace Butjok.CommandLine
         private static readonly List<IToken> tokens = new List<IToken>();
         private static readonly List<IToken> tokenAt = new List<IToken>();
         private static readonly StringBuilder sb = new StringBuilder();
-
+        
         public static string Colorize(string text, Theme theme = null) {
             if (!theme)
                 return text;

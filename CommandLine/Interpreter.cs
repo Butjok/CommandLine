@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Butjok.CommandLine
 {
-    public class Interpreter : CommandLineBaseVisitor<object>
+    public class Interpreter : CommandLineBaseVisitor<dynamic>
     {
         public static readonly Dictionary<char, char> unescape = new Dictionary<char, char> {
             ['\"'] = '\"',
@@ -35,44 +35,35 @@ namespace Butjok.CommandLine
             parser.AddErrorListener(new ExceptionThrower<IToken>());
             escape = unescape.ToDictionary(pair => pair.Value, pair => pair.Key);
         }
-        public static object Execute(string input) {
-            lexer.SetInputStream(new AntlrInputStream(input));
+        public static object Execute(string text) {
+            lexer.SetInputStream(new AntlrInputStream(text));
             parser.TokenStream = new CommonTokenStream(lexer);
-            object value = null;
-            foreach (var command in parser.input().command())
-                value = interpreter.VisitCommand(command);
-            return value;
-        }
-        public static object Evaluate(string input) {
-            lexer.SetInputStream(new AntlrInputStream(input));
-            parser.TokenStream = new CommonTokenStream(lexer);
-            return interpreter.Visit(parser.value());
+            var value = parser.input().value();
+            return value == null ? null : interpreter.Visit(value);
         }
 
-        public override object VisitInteger(CommandLineParser.IntegerContext context) {
+        public override dynamic VisitNull(CommandLineParser.NullContext context) {
+            return null;
+        }
+        public override dynamic VisitInteger(CommandLineParser.IntegerContext context) {
             return int.Parse(context.GetText());
         }
-        public override object VisitBoolean(CommandLineParser.BooleanContext context) {
+        public override dynamic VisitBoolean(CommandLineParser.BooleanContext context) {
             return context.GetText() == "true";
         }
-        public override object VisitReal(CommandLineParser.RealContext context) {
+        public override dynamic VisitReal(CommandLineParser.RealContext context) {
             return float.Parse(context.GetText());
         }
-        public override object VisitParenthesis(CommandLineParser.ParenthesisContext context) {
+        public override dynamic VisitParenthesis(CommandLineParser.ParenthesisContext context) {
             return Visit(context.value());
         }
-        public override object VisitCommand(CommandLineParser.CommandContext context) {
-            return Commands.Invoke(context.Identifier().GetText(), context.value().Select(Visit).ToArray());
-        }
-        public override object VisitInterpolation(CommandLineParser.InterpolationContext context) {
+        public override dynamic VisitCommand(CommandLineParser.CommandContext context) {
             return context.Identifier() != null
-                ? Commands.Invoke(context.Identifier().GetText())   // short form without curly braces
-                : VisitCommand(context.command());
+                ? Commands.Invoke(context.Identifier().GetText(), context.value().Select(Visit).Cast<object>().ToArray())
+                : Visit(context.value(0));
         }
 
-        public override object VisitString(CommandLineParser.StringContext context) {
-            if (context.Identifier() != null)
-                return context.Identifier().GetText();
+        public override dynamic VisitString(CommandLineParser.StringContext context) {
             sb.Clear();
             var text = context.GetText();
             for (var i = 1; i < text.Length - 1; i++)
@@ -83,68 +74,71 @@ namespace Butjok.CommandLine
                         : "\\" + text[i]);
             return sb.ToString();
         }
+
+        public const string unsupported = "Operators are not supported with Api Compatibility Level .NET Standard 2.0. Please change the Api Compatibility Level to .NET 4.x in Edit > Project Settings > Player > Other Settings > Configuration.";
         
-        public override object VisitUnaryExpression(CommandLineParser.UnaryExpressionContext context) {
-#if NET_4_6
-            dynamic value = Visit(context.value());
-            switch (context.@operator.Text) {
-                case "-": return -value;
-                case "!": return !value;
-                default: throw new ArgumentOutOfRangeException(context.@operator.Text);
-            }
+        public override dynamic VisitUnaryExpression(CommandLineParser.UnaryExpressionContext context) {
+#if !NET_4_6
+            throw new NotSupportedException(unsupported);
 #else
-                throw new NotSupportedException("Unary operators are supported only in the .NET 4.x API compatibility level.");
+            var value = Visit(context.value());
+            return context.@operator.Text switch {
+                "-" => -value,
+                "!" => !value,
+                "~" => ~value,
+                _ => throw new ArgumentOutOfRangeException(context.@operator.Text)
+            };
 #endif
         }
 
-        public override object VisitSummation(CommandLineParser.SummationContext context) {
-#if NET_4_6
-            dynamic lhs = Visit(context.value(0));
-            dynamic rhs = Visit(context.value(1));
-            switch (context.@operator.Text) {
-                case "+": return lhs + rhs;
-                case "-": return lhs - rhs;
-                default: throw new ArgumentOutOfRangeException(context.@operator.Text);
-            }
+        public override dynamic VisitSummation(CommandLineParser.SummationContext context) {
+#if !NET_4_6
+            throw new NotSupportedException(unsupported);
 #else
-                throw new NotSupportedException("Arithmetic operators are supported only in the .NET 4.x API compatibility level.");
+            var lhs = Visit(context.value(0));
+            var rhs = Visit(context.value(1));
+            return context.@operator.Text switch {
+                "+" => lhs + rhs,
+                "-" => lhs - rhs,
+                _ => throw new ArgumentOutOfRangeException(context.@operator.Text)
+            };
 #endif
         }
 
-        public override object VisitMultiplication(CommandLineParser.MultiplicationContext context) {
-#if NET_4_6
-            dynamic lhs = Visit(context.value(0));
-            dynamic rhs = Visit(context.value(1));
-            switch (context.@operator.Text) {
-                case "*": return lhs * rhs;
-                case "/": return lhs / rhs;
-                case "%": return lhs % rhs;
-                default: throw new ArgumentOutOfRangeException(context.@operator.Text);
-            }
+        public override dynamic VisitMultiplication(CommandLineParser.MultiplicationContext context) {
+#if !NET_4_6
+            throw new NotSupportedException(unsupported);
 #else
-                throw new NotSupportedException("Arithmetic operators are supported only in the .NET 4.x API compatibility level.");
+            var lhs = Visit(context.value(0));
+            var rhs = Visit(context.value(1));
+            return context.@operator.Text switch {
+                "*" => lhs * rhs,
+                "/" => lhs / rhs,
+                "%" => lhs % rhs,
+                _ => throw new ArgumentOutOfRangeException(context.@operator.Text)
+            };
 #endif
         }
 
-        public override object VisitJunction(CommandLineParser.JunctionContext context) {
-#if NET_4_6
-            dynamic lhs = Visit(context.value(0));
-            dynamic rhs = Visit(context.value(1));
-            switch (context.@operator.Text) {
-                case "&&": return lhs && rhs;
-                case "||": return lhs || rhs;
-                default: throw new ArgumentOutOfRangeException(context.@operator.Text);
-            }
+        public override dynamic VisitJunction(CommandLineParser.JunctionContext context) {
+#if !NET_4_6
+            throw new NotSupportedException(unsupported);
 #else
-                throw new NotSupportedException("Logical operators are supported only in the .NET 4.x API compatibility level.");
+            var lhs = Visit(context.value(0));
+            var rhs = Visit(context.value(1));
+            return context.@operator.Text switch {
+                "&&" => lhs && rhs,
+                "||" => lhs || rhs,
+                _ => throw new ArgumentOutOfRangeException(context.@operator.Text)
+            };
 #endif
         }
 
-        public override object VisitColor(CommandLineParser.ColorContext context) {
-            var r = Visit(context.value(0));
-            var g = Visit(context.value(1));
-            var b = Visit(context.value(2));
-            var a = context.value(3) == null ? 1 : Visit(context.value(3));
+        public override dynamic VisitColor(CommandLineParser.ColorContext context) {
+            var r = (object)Visit(context.value(0));
+            var g = (object)Visit(context.value(1));
+            var b = (object)Visit(context.value(2));
+            var a = context.value(3) == null ? 1 : (object)Visit(context.value(3));
             return new Color(
                 r is int ri ? ri : (float)r,
                 g is int gi ? gi : (float)g,
@@ -152,8 +146,27 @@ namespace Butjok.CommandLine
                 a is int ai ? ai : (float)a);
         }
 
-        public override object VisitInt2(CommandLineParser.Int2Context context) {
-            return new Vector2Int((int)Visit(context.x), (int)Visit(context.y));
+        public override dynamic VisitInt2(CommandLineParser.Int2Context context) {
+            return new Vector2Int((int)(object)Visit(context.x), (int)(object)Visit(context.y));
+        }
+        public override dynamic VisitInt3(CommandLineParser.Int3Context context) {
+            return new Vector3Int((int)(object)Visit(context.x), (int)(object)Visit(context.y), (int)(object)Visit(context.z));
+        }
+        public override dynamic VisitFloat2(CommandLineParser.Float2Context context) {
+            var x = (object)Visit(context.x);
+            var y = (object)Visit(context.y);
+            return new Vector2(
+                x is int xi ? xi : (float)x,
+                y is int yi ? yi : (float)y);
+        }
+        public override dynamic VisitFloat3(CommandLineParser.Float3Context context) {
+            var x = (object)Visit(context.x);
+            var y = (object)Visit(context.y);
+            var z = (object)Visit(context.z);
+            return new Vector3(
+                x is int xi ? xi : (float)x,
+                y is int yi ? yi : (float)y,
+                z is int zi ? zi : (float)z);
         }
 
         public static string Format(object value) {
@@ -164,7 +177,11 @@ namespace Butjok.CommandLine
                     sb.Clear();
                     sb.Append("\"");
                     foreach (var c in str)
-                        sb.Append(escape.TryGetValue(c, out var mnemonic) ? "\\" + mnemonic : c.ToString());
+                        if (escape.TryGetValue(c, out var mnemonic)) {
+                            sb.Append(mnemonic);
+                            sb.Append('\\');
+                        }
+                        else sb.Append(c);
                     sb.Append("\"");
                     return sb.ToString();
                 }

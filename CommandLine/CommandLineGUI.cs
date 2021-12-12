@@ -37,26 +37,30 @@ namespace Butjok.CommandLine
 
         private string input = "";
         private int index = -1;
-        private List<string> matches = new List<string>();
-        private bool initialized;
+        private readonly List<string> matches = new List<string>();
         private Action action;
 
         private void Awake() {
-            if (initialized)
-                return;
-            initialized = true;
-
             if (dontDestroyOnLoad)
                 DontDestroyOnLoad(gameObject);
-
             Commands.Fetch(assemblies.Select(Assembly.Load), includeNamespaceName);
         }
 
         private void OnApplicationQuit() {
-            CommandHistory.Save();
+            History.Save();
         }
 
         private void OnGUI() {
+
+            void FindCompletions() {
+                var pattern = string.Join("[^.]*", input.Select(c => Regex.Escape(c.ToString()))) + "[^.]*$";
+                var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+                matches.Clear();
+                matches.AddRange(Commands.Names
+                    .Where(n => regex.IsMatch(n))
+                    .OrderBy(n => Levenshtein.Distance(input, n))
+                    .ThenBy(n => n));
+            }
 
             GUI.skin = guiSkin;
 
@@ -67,15 +71,16 @@ namespace Butjok.CommandLine
                     case KeyCode.DownArrow: {
                         Event.current.Use();
                         var offset = Event.current.keyCode == KeyCode.UpArrow ? -1 : 1;
-                        if (CommandHistory.Lookup(offset)) {
-                            input = CommandHistory.Text;
-                            index = -1;
-                            FindCompletions();
-                            action = () => {
-                                var textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
-                                textEditor.selectIndex = textEditor.cursorIndex = 999;
-                            };
-                        }
+                        if (!History.Lookup(offset))
+                            break;
+
+                        input = History.Text;
+                        index = -1;
+                        FindCompletions();
+                        action = () => {
+                            var textEditor = (TextEditor)GUIUtility.GetStateObject(typeof(TextEditor), GUIUtility.keyboardControl);
+                            textEditor.selectIndex = textEditor.cursorIndex = 999;
+                        };
                         break;
                     }
 
@@ -88,7 +93,7 @@ namespace Butjok.CommandLine
 
                     case KeyCode.Return:
                         Event.current.Use();
-                        CommandHistory.Add(input);
+                        History.Add(input);
                         var value = Interpreter.Execute(input);
                         if (value != null)
                             Debug.Log(value);
@@ -127,7 +132,6 @@ namespace Butjok.CommandLine
                     }
                 }
             }
-
             if (Event.current.type == EventType.Repaint && action != null) {
                 action();
                 action = null;
@@ -138,7 +142,7 @@ namespace Butjok.CommandLine
             input = GUI.TextField(rect, input);
             GUI.Label(rect, Colorizer.Colorize(input, theme));
             if (input != oldInput) {
-                CommandHistory.SetText(input);
+                History.SetText(input);
                 index = -1;
                 FindCompletions();
             }
@@ -147,7 +151,9 @@ namespace Butjok.CommandLine
             var prefixMaxLength = string.Format(prefixFormat, matches.Count, matches.Count).Length;
 
             var (low, high) = SlidingWindow(matches.Count, index - radius, index + radius);
-            for (var i = low; i <= high; i++) {
+            for (var i = low;
+                i <= high;
+                i++) {
                 var name = matches[i];
                 var info = "";
                 if (Commands.IsVariable(name))
@@ -172,16 +178,6 @@ namespace Butjok.CommandLine
             }
         }
 
-        private void FindCompletions() {
-            var pattern = string.Join("[^.]*", input.Select(c => Regex.Escape(c.ToString()))) + "[^.]*$";
-            var regex = new Regex(pattern, RegexOptions.IgnoreCase);
-            matches.Clear();
-            matches.AddRange(Commands.Names
-                .Where(name => regex.IsMatch(name))
-                .OrderBy(name => Levenshtein.Distance(input, name))
-                .ThenBy(name => name));
-        }
-
         public static (int low, int high) SlidingWindow(int count, int low, int high) {
             if (low < 0 && high >= count) {
                 low = 0;
@@ -197,5 +193,6 @@ namespace Butjok.CommandLine
             }
             return (low, high);
         }
+
     }
 }

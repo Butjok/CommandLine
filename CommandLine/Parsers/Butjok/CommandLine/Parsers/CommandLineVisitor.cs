@@ -39,12 +39,6 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitInput([NotNull] CommandLineParser.InputContext context);
 	/// <summary>
-	/// Visit a parse tree produced by <see cref="CommandLineParser.command"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitCommand([NotNull] CommandLineParser.CommandContext context);
-	/// <summary>
 	/// Visit a parse tree produced by the <c>junction</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
@@ -52,26 +46,19 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitJunction([NotNull] CommandLineParser.JunctionContext context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>interpolation</c>
+	/// Visit a parse tree produced by the <c>float2</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitInterpolation([NotNull] CommandLineParser.InterpolationContext context);
+	Result VisitFloat2([NotNull] CommandLineParser.Float2Context context);
 	/// <summary>
-	/// Visit a parse tree produced by the <c>int2</c>
+	/// Visit a parse tree produced by the <c>float3</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
-	Result VisitInt2([NotNull] CommandLineParser.Int2Context context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>boolean</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitBoolean([NotNull] CommandLineParser.BooleanContext context);
+	Result VisitFloat3([NotNull] CommandLineParser.Float3Context context);
 	/// <summary>
 	/// Visit a parse tree produced by the <c>string</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
@@ -101,6 +88,55 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <return>The visitor result.</return>
 	Result VisitReal([NotNull] CommandLineParser.RealContext context);
 	/// <summary>
+	/// Visit a parse tree produced by the <c>parenthesis</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>command</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitCommand([NotNull] CommandLineParser.CommandContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>summation</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitSummation([NotNull] CommandLineParser.SummationContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>int2</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInt2([NotNull] CommandLineParser.Int2Context context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>boolean</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitBoolean([NotNull] CommandLineParser.BooleanContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>null</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitNull([NotNull] CommandLineParser.NullContext context);
+	/// <summary>
+	/// Visit a parse tree produced by the <c>int3</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	/// <return>The visitor result.</return>
+	Result VisitInt3([NotNull] CommandLineParser.Int3Context context);
+	/// <summary>
 	/// Visit a parse tree produced by the <c>multiplication</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
@@ -114,19 +150,5 @@ public interface ICommandLineVisitor<Result> : IParseTreeVisitor<Result> {
 	/// <param name="context">The parse tree.</param>
 	/// <return>The visitor result.</return>
 	Result VisitUnaryExpression([NotNull] CommandLineParser.UnaryExpressionContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>parenthesis</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
-	/// <summary>
-	/// Visit a parse tree produced by the <c>summation</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	/// <return>The visitor result.</return>
-	Result VisitSummation([NotNull] CommandLineParser.SummationContext context);
 }
 } // namespace Butjok.CommandLine.Parsers

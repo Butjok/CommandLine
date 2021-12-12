@@ -1,25 +1,24 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace Butjok.CommandLine
 {
-    public static class CommandHistory
+    public static class History
     {
-        private static List<string> lines;
+        private static string input = "";
+        private static readonly List<string> lines = new List<string>();
         private static int index;
-        private static string input;
 
         [Command]
-        public static string PlayerPrefsKey => typeof(CommandHistory).FullName;
+        public static string PlayerPrefsKey => typeof(History).FullName;
 
         public static string Text => index == lines.Count ? input : lines[index];
-        static CommandHistory() {
-            input = "";
-            lines = new List<string>();
+        static History() {
             var serialized = PlayerPrefs.GetString(PlayerPrefsKey, null);
             if (serialized != null)
-                lines.AddRange(serialized.Split('\n'));
+                lines.AddRange(serialized.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries));
             index = lines.Count;
         }
         public static void Save() {
@@ -44,7 +43,7 @@ namespace Butjok.CommandLine
         [Command]
         public static void Clear() {
             lines.Clear();
-            PlayerPrefs.DeleteKey(nameof(CommandHistory));
+            PlayerPrefs.DeleteKey(PlayerPrefsKey);
         }
     }
 }

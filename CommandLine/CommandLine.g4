@@ -1,20 +1,23 @@
 grammar CommandLine;
 
-input: (command (Semicolon command)*)? EOF;
-command: Identifier value*;
+input: value? EOF;
 value
-    : (True | False) #boolean
+    : Identifier value* #command
+    | Null #null
+    | (True | False) #boolean
     | Integer #integer
     | Real #real
-    | (Identifier | String) #string
-    | Interpolation (Identifier | LeftCurlyBrace command RightCurlyBrace) #interpolation
+    | String #string
     | LeftParenthesis value RightParenthesis #parenthesis
-    | operator=(Minus | Exclamation) value #unaryExpression
+    | operator=(Minus | Exclamation | Tilde) value #unaryExpression
     | value operator=(Asterisk | ForwardSlash | Percent) value #multiplication
     | value operator=(Plus | Minus) value #summation
     | value operator=(DoubleAmpersand | DoubleVerticalBar) value #junction
     | Rgb r=value g=value b=value a=value? #color
     | Int2 x=value y=value #int2
+    | Int3 x=value y=value z=value #int3
+    | Float2 x=value y=value #float2
+    | Float3 x=value y=value z=value #float3
     ;
 
 Asterisk:           '*';
@@ -22,21 +25,22 @@ DoubleAmpersand:    '&&';
 DoubleVerticalBar:  '||';
 Exclamation:        '!';
 False:              'false';
+Float2:             'float2';
+Float3:             'float3';
 ForwardSlash:       '/';
 Int2:               'int2';
-Interpolation:      '$';
-LeftCurlyBrace:     '{';
+Int3:               'int3';
 LeftParenthesis:    '(';
 LeftSquareBracket:  '[';
 Minus:              '-';
+Null:               'null';
 Percent:            '%';
 Plus:               '+';
 Rgb:                'rgb';
-RightCurlyBrace:    '}';
 RightParenthesis:   ')';
 RightSquareBracket: ']';
-Semicolon:          ';';
 True:               'true';
+Tilde:              '~';
 
 Identifier: [a-zA-Z_][a-zA-Z_0-9]* ('.' [a-zA-Z_][a-zA-Z_0-9]*)*;
 Integer: '-'? INT;

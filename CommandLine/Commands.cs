@@ -33,17 +33,11 @@ namespace Butjok.CommandLine
 
                 case MethodInfo methodInfo: {
                     var targets = methodInfo.IsStatic ? new object[] { null } : UnityEngine.Object.FindObjectsOfType(methodInfo.DeclaringType);
-                    var parameterInfos = methodInfo.GetParameters();
-                    var defaultValues = new List<object>();
-                    for (var i = arguments.Count; i < parameterInfos.Length; i++) {
-                        if (!parameterInfos[i].IsOptional)
-                            throw new TargetParameterCountException($"Parameter {parameterInfos[i]} is not optional, please provide a value for it.");
-                        defaultValues.Add(parameterInfos[i].DefaultValue);
-                    }
                     object returnValue = null;
+                    // TODO this try try/catch is not entirely correct since the exception might be thrown from deep nested call 
                     try {
                         foreach (var target in targets)
-                            returnValue = methodInfo.Invoke(target, arguments.Concat(defaultValues).ToArray());
+                            returnValue = methodInfo.Invoke(target, arguments.ToArray());
                     }
                     catch (TargetParameterCountException e) {
                         throw new TargetParameterCountException($"Incorrect arguments number for the method {methodInfo}: expected {methodInfo.GetParameters().Length}, got {arguments.Count}.", e);
@@ -106,7 +100,7 @@ namespace Butjok.CommandLine
             void AddCommand(MemberInfo memberInfo) {
                 Validate(memberInfo);
                 var prefix = (includeNamespaceName ? memberInfo.DeclaringType.FullName : memberInfo.DeclaringType.Name) + '.';
-                // Nested classes have + separators instead of dots
+                // Nested classes have '+' separators instead of dots
                 var name = (prefix + memberInfo.Name).Replace('+', '.');
                 commands[name] = memberInfo;
             }

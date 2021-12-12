@@ -18,7 +18,7 @@ public class FloatingBall : MonoBehaviour
     [Command]
     public float offsetMultiplier = .1f;
 
-    private Renderer renderer;
+    private new Renderer renderer;
     private Vector3 originalPosition;
     private void Awake() {
         originalPosition = transform.position;
@@ -33,4 +33,7 @@ public class FloatingBall : MonoBehaviour
     public void SetRandomColor() {
         Color = Color.HSVToRGB(Random.value, 1, 1);
     }
+
+    [Command]
+    public int Test(int x = 1) => x;
 }

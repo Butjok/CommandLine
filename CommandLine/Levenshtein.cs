@@ -5,7 +5,8 @@ namespace Butjok.CommandLine
 {
     public static class Levenshtein
     {
-        private static int[,] distance;
+        public const int initialSize = 100;
+        private static int[,] distance = new int[initialSize, initialSize];
 
         public static int Distance(string a, string b, bool ignoreCase = true) {
 
@@ -23,15 +24,19 @@ namespace Butjok.CommandLine
             for (var i = 0; i <= a.Length; distance[i, 0] = i++) { }
             for (var j = 0; j <= b.Length; distance[0, j] = j++) { }
 
-            for (var i = 1; i <= a.Length; i++)
-            for (var j = 1; j <= b.Length; j++) {
-
-                var areEqual = ignoreCase ? char.ToUpperInvariant(b[j - 1]) == char.ToUpperInvariant(a[i - 1]) : b[j - 1] == a[i - 1];
-                var cost = areEqual ? 0 : 1;
-
-                distance[i, j] = Mathf.Min(
-                    Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
-                    distance[i - 1, j - 1] + cost);
+            if (!ignoreCase) {
+                for (var i = 1; i <= a.Length; i++)
+                for (var j = 1; j <= b.Length; j++)
+                    distance[i, j] = Mathf.Min(
+                        Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
+                        distance[i - 1, j - 1] + (b[j - 1] == a[i - 1] ? 0 : 1));
+            }
+            else {
+                for (var i = 1; i <= a.Length; i++)
+                for (var j = 1; j <= b.Length; j++)
+                    distance[i, j] = Mathf.Min(
+                        Mathf.Min(distance[i - 1, j] + 1, distance[i, j - 1] + 1),
+                        distance[i - 1, j - 1] + (char.ToUpperInvariant(b[j - 1]) == char.ToUpperInvariant(a[i - 1]) ? 0 : 1));
             }
             return distance[a.Length, b.Length];
         }

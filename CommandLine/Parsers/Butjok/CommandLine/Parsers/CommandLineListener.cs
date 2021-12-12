@@ -42,16 +42,6 @@ public interface ICommandLineListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitInput([NotNull] CommandLineParser.InputContext context);
 	/// <summary>
-	/// Enter a parse tree produced by <see cref="CommandLineParser.command"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterCommand([NotNull] CommandLineParser.CommandContext context);
-	/// <summary>
-	/// Exit a parse tree produced by <see cref="CommandLineParser.command"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitCommand([NotNull] CommandLineParser.CommandContext context);
-	/// <summary>
 	/// Enter a parse tree produced by the <c>junction</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
@@ -64,41 +54,29 @@ public interface ICommandLineListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitJunction([NotNull] CommandLineParser.JunctionContext context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>interpolation</c>
+	/// Enter a parse tree produced by the <c>float2</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterInterpolation([NotNull] CommandLineParser.InterpolationContext context);
+	void EnterFloat2([NotNull] CommandLineParser.Float2Context context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>interpolation</c>
+	/// Exit a parse tree produced by the <c>float2</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitInterpolation([NotNull] CommandLineParser.InterpolationContext context);
+	void ExitFloat2([NotNull] CommandLineParser.Float2Context context);
 	/// <summary>
-	/// Enter a parse tree produced by the <c>int2</c>
+	/// Enter a parse tree produced by the <c>float3</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void EnterInt2([NotNull] CommandLineParser.Int2Context context);
+	void EnterFloat3([NotNull] CommandLineParser.Float3Context context);
 	/// <summary>
-	/// Exit a parse tree produced by the <c>int2</c>
+	/// Exit a parse tree produced by the <c>float3</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
-	void ExitInt2([NotNull] CommandLineParser.Int2Context context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>boolean</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterBoolean([NotNull] CommandLineParser.BooleanContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>boolean</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitBoolean([NotNull] CommandLineParser.BooleanContext context);
+	void ExitFloat3([NotNull] CommandLineParser.Float3Context context);
 	/// <summary>
 	/// Enter a parse tree produced by the <c>string</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
@@ -148,6 +126,90 @@ public interface ICommandLineListener : IParseTreeListener {
 	/// <param name="context">The parse tree.</param>
 	void ExitReal([NotNull] CommandLineParser.RealContext context);
 	/// <summary>
+	/// Enter a parse tree produced by the <c>parenthesis</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>parenthesis</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>command</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterCommand([NotNull] CommandLineParser.CommandContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>command</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitCommand([NotNull] CommandLineParser.CommandContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>summation</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterSummation([NotNull] CommandLineParser.SummationContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>summation</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitSummation([NotNull] CommandLineParser.SummationContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>int2</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterInt2([NotNull] CommandLineParser.Int2Context context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>int2</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitInt2([NotNull] CommandLineParser.Int2Context context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>boolean</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterBoolean([NotNull] CommandLineParser.BooleanContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>boolean</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitBoolean([NotNull] CommandLineParser.BooleanContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>null</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterNull([NotNull] CommandLineParser.NullContext context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>null</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitNull([NotNull] CommandLineParser.NullContext context);
+	/// <summary>
+	/// Enter a parse tree produced by the <c>int3</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void EnterInt3([NotNull] CommandLineParser.Int3Context context);
+	/// <summary>
+	/// Exit a parse tree produced by the <c>int3</c>
+	/// labeled alternative in <see cref="CommandLineParser.value"/>.
+	/// </summary>
+	/// <param name="context">The parse tree.</param>
+	void ExitInt3([NotNull] CommandLineParser.Int3Context context);
+	/// <summary>
 	/// Enter a parse tree produced by the <c>multiplication</c>
 	/// labeled alternative in <see cref="CommandLineParser.value"/>.
 	/// </summary>
@@ -171,29 +233,5 @@ public interface ICommandLineListener : IParseTreeListener {
 	/// </summary>
 	/// <param name="context">The parse tree.</param>
 	void ExitUnaryExpression([NotNull] CommandLineParser.UnaryExpressionContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>parenthesis</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>parenthesis</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitParenthesis([NotNull] CommandLineParser.ParenthesisContext context);
-	/// <summary>
-	/// Enter a parse tree produced by the <c>summation</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void EnterSummation([NotNull] CommandLineParser.SummationContext context);
-	/// <summary>
-	/// Exit a parse tree produced by the <c>summation</c>
-	/// labeled alternative in <see cref="CommandLineParser.value"/>.
-	/// </summary>
-	/// <param name="context">The parse tree.</param>
-	void ExitSummation([NotNull] CommandLineParser.SummationContext context);
 }
 } // namespace Butjok.CommandLine.Parsers

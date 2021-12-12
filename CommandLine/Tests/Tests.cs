@@ -20,35 +20,23 @@ namespace Butjok.CommandLine
         public const float pi = Mathf.PI;
 
         [TestCase("Butjok.CommandLine.Tests.Double 1 + 2", ExpectedResult = 6)]
-        [TestCase("Butjok.CommandLine.Tests.Double ${Butjok.CommandLine.Tests.Identity 42}", ExpectedResult = 84)]
+        [TestCase("Butjok.CommandLine.Tests.Double (Butjok.CommandLine.Tests.Identity 42)", ExpectedResult = 84)]
         [TestCase("Butjok.CommandLine.Tests.pi", ExpectedResult = pi)]
-        [TestCase("Butjok.CommandLine.Tests.Identity 1; Butjok.CommandLine.Tests.Identity 2", ExpectedResult = 2)]
-        public static object TestExecute(string input) {
-            return Interpreter.Execute(input);
-        }
-
-        [TestCase("$Butjok.CommandLine.Tests.pi", ExpectedResult = pi)]
-        [TestCase("${Butjok.CommandLine.Tests.pi}", ExpectedResult = pi)]
         [TestCase("90 / 2", ExpectedResult = 45)]
         [TestCase("5 % 3", ExpectedResult = 2)]
         [TestCase("3 + 4 * 5", ExpectedResult = 23)]
         [TestCase("\"hello\\\"world\\r\\n\\f\"", ExpectedResult = "hello\"world\r\n\f")]
         [TestCase("3 + 4 * 5", ExpectedResult = 23)]
-        [TestCase("!$Butjok.CommandLine.Tests.Overloaded.instance", ExpectedResult = "not")]
-        [TestCase("$Butjok.CommandLine.Tests.Overloaded.instance + 2", ExpectedResult = "add")]
-        public static object TestEvaluate(string input) {
-            return Interpreter.Evaluate(input);
+        [TestCase("!Butjok.CommandLine.Tests.Overloaded.instance", ExpectedResult = "not")]
+        [TestCase("Butjok.CommandLine.Tests.Overloaded.instance + 2", ExpectedResult = "add")]
+        public static object TestExecute(string input) {
+            return Interpreter.Execute(input);
         }
 
         [TestCase("Butjok.CommandLine.Tests.pi", ExpectedResult = true)]
         [TestCase("Butjok.CommandLine.Tests.Double", ExpectedResult = false)]
         public static bool TestIsVariable(string name) {
             return Commands.IsVariable(name);
-        }
-
-        [Test]
-        public static void TestTokenGeneration() {
-            GenerateTokens.Run();
         }
 
         [TestCase("kitten", "sitting", ExpectedResult = 3)]
@@ -58,6 +46,7 @@ namespace Butjok.CommandLine
         public static int TestLevenshtein(string a, string b, bool ignoreCase = false) {
             return Levenshtein.Distance(a, b, ignoreCase);
         }
+        
         
         public class Overloaded
         {
